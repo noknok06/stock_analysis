@@ -1,8 +1,102 @@
+# Django Core
 Django==4.2.7
+djangorestframework==3.14.0
+
+# Database
+psycopg2-binary==2.9.7  # PostgreSQL (本番環境用)
+
+# Tagging System
 django-taggit==4.0.0
-Pillow==10.0.1
-gunicorn==21.2.0
-psycopg2-binary==2.9.7
-redis==5.0.1
-django-redis==5.4.0
-python-decouple==3.8
+
+# Forms & UI
+django-crispy-forms==2.0
+crispy-bootstrap4==2022.1
+
+# Caching & Performance
+redis==4.6.0
+django-redis==5.3.0
+
+# API & CORS
+django-cors-headers==4.3.1
+
+# Data Processing & AI Features
+numpy==1.24.3
+pandas==2.0.3
+scikit-learn==1.3.0
+
+# Text Processing (AI分析用)
+nltk==3.8.1
+textblob==0.17.1
+regex==2023.8.8
+
+# Date & Time Processing
+python-dateutil==2.8.2
+
+# HTTP Requests (外部API用)
+requests==2.31.0
+urllib3==2.0.4
+
+# JSON Processing
+ujson==5.8.0
+
+# Math & Statistics
+scipy==1.11.2
+
+# Utilities
+python-decouple==3.8  # 環境変数管理
+Pillow==10.0.0  # 画像処理（将来のチャート分析用）
+
+# Development Tools
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+
+# Testing
+pytest==7.4.0
+pytest-django==4.5.2
+pytest-cov==4.1.0
+factory-boy==3.3.0
+
+# Code Quality
+flake8==6.0.0
+black==23.7.0
+isort==5.12.0
+
+# Async Processing (将来の拡張用)
+celery==5.3.1
+celery[redis]
+
+# Monitoring & Logging
+sentry-sdk==1.30.0
+
+# Security
+cryptography==41.0.3
+
+# Data Validation
+marshmallow==3.20.1
+
+# File Processing
+openpyxl==3.1.2  # Excel読み込み（将来の財務データ分析用）
+python-magic==0.4.27
+
+# Documentation
+sphinx==7.1.2
+sphinx-rtd-theme==1.3.0
+
+# Environment & Deployment
+gunicorn==21.2.0  # 本番環境用WSGIサーバー
+whitenoise==6.5.0  # 静的ファイル配信
+python-dotenv==1.0.0
+
+# Time Zone Support
+pytz==2023.3
+
+# HTML Parsing (スクレイピング用)
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# Fuzzy Matching (AI分析強化用)
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.21.1
+
+# Email
+django-anymail==10.1  # メール送信（本番環境用）

@@ -167,9 +167,7 @@
                                                 <span>{{ notebook.entry_count }}件の記録</span>
                                             </div>
                                             <div class="flex flex-wrap gap-1 mt-2">
-                                                {% for tag in notebook.tags.all %}
-                                                    <span class="tw-badge-secondary text-xs">#{{ tag.name }}</span>
-                                                {% endfor %}
+                                                
                                             </div>
                                         </div>
                                         <span class="text-xs text-gray-500">{{ notebook.updated_at|timesince }}前</span>
