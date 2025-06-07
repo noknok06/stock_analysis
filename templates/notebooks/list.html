@@ -1,138 +1,1193 @@
-<!-- # templates/notebooks/list.html -->
+<!-- templates/notebooks/list.html (改良版) -->
 {% extends 'base.html' %}
 
 {% block title %}ノート一覧 - 株式分析記録アプリ{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto p-4 space-y-6">
-    <!-- ヘッダー -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">ノート一覧</h1>
-            <p class="text-gray-600">あなたの投資分析ノート</p>
-        </div>
-        <a href="{% url 'notebook_create' %}" class="tw-btn-primary">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            新規ノート
-        </a>
-    </div>
-
-    <!-- 検索バー -->
-    <div class="tw-card">
-        <div class="tw-card-content p-4">
-            <form method="get" class="flex gap-4">
-                <div class="relative flex-1">
-                    <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
-                    <input 
-                        type="text" 
-                        name="search"
-                        value="{{ search_query }}"
-                        placeholder="銘柄名、企業名、タグで検索..." 
-                        class="tw-input pl-10"
-                    />
+<div class="notebook-list max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+    <!-- ページヘッダー -->
+    <header class="notebook-list__header mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="notebook-list__header-content">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+                    <span role="img" aria-label="ノート一覧">📚</span>
+                    ノート一覧
+                </h1>
+                <p class="text-sm md:text-base text-gray-600 mt-1">
+                    すべての投資記録を管理・検索できます
+                </p>
+            </div>
+            
+            <div class="notebook-list__header-actions flex items-center gap-2">
+                <!-- 表示切り替え -->
+                <div class="view-toggle-group flex bg-gray-100 rounded-lg p-1" role="group" aria-label="表示形式">
+                    <button type="button" 
+                            class="view-toggle app-btn app-btn--ghost app-btn--sm px-3 py-1 rounded"
+                            data-view="grid"
+                            onclick="switchView('grid')"
+                            aria-pressed="true"
+                            aria-label="グリッド表示">
+                        <i data-lucide="grid-3x3" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" 
+                            class="view-toggle app-btn app-btn--ghost app-btn--sm px-3 py-1 rounded"
+                            data-view="list"
+                            onclick="switchView('list')"
+                            aria-pressed="false"
+                            aria-label="リスト表示">
+                        <i data-lucide="list" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <button type="submit" class="tw-btn-primary">検索</button>
-                {% if search_query %}
-                    <a href="{% url 'notebook_list' %}" class="tw-btn-outline">クリア</a>
-                {% endif %}
-            </form>
+                
+                <!-- ソートメニュー -->
+                <div class="relative">
+                    <button type="button" 
+                            class="sort-menu-button app-btn app-btn--secondary app-btn--sm"
+                            onclick="toggleSortMenu()"
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            id="sort-menu-trigger">
+                        <i data-lucide="arrow-up-down" class="w-4 h-4" aria-hidden="true"></i>
+                        <span class="hidden sm:inline">並び替え</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 ml-1" aria-hidden="true"></i>
+                    </button>
+                    
+                    <div id="sort-menu" 
+                         class="sort-menu absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 hidden"
+                         role="menu"
+                         aria-labelledby="sort-menu-trigger">
+                        <div class="p-2">
+                            <button type="button" 
+                                    class="sort-option w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded transition-colors"
+                                    data-sort="updated_desc"
+                                    onclick="applySorting('updated_desc')"
+                                    role="menuitem">
+                                <i data-lucide="clock" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                                更新日時（新しい順）
+                            </button>
+                            <button type="button" 
+                                    class="sort-option w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded transition-colors"
+                                    data-sort="updated_asc"
+                                    onclick="applySorting('updated_asc')"
+                                    role="menuitem">
+                                <i data-lucide="clock" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                                更新日時（古い順）
+                            </button>
+                            <button type="button" 
+                                    class="sort-option w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded transition-colors"
+                                    data-sort="created_desc"
+                                    onclick="applySorting('created_desc')"
+                                    role="menuitem">
+                                <i data-lucide="calendar" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                                作成日時（新しい順）
+                            </button>
+                            <button type="button" 
+                                    class="sort-option w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded transition-colors"
+                                    data-sort="title_asc"
+                                    onclick="applySorting('title_asc')"
+                                    role="menuitem">
+                                <i data-lucide="a-arrow-up" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                                タイトル（昇順）
+                            </button>
+                            <button type="button" 
+                                    class="sort-option w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded transition-colors"
+                                    data-sort="entry_count_desc"
+                                    onclick="applySorting('entry_count_desc')"
+                                    role="menuitem">
+                                <i data-lucide="file-text" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                                記録数（多い順）
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary app-btn--sm">
+                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                    <span class="hidden xs:inline">新規ノート</span>
+                    <span class="xs:hidden">新規</span>
+                </a>
+            </div>
         </div>
-    </div>
+    </header>
+
+    <!-- 検索・フィルターセクション -->
+    <section class="search-filter-section mb-6" aria-labelledby="search-filter-heading">
+        <h2 id="search-filter-heading" class="sr-only">検索とフィルター</h2>
+        
+        <div class="app-card">
+            <div class="app-card__content p-3 md:p-4">
+                <!-- メイン検索バー -->
+                <div class="search-main mb-4">
+                    <label for="main-search" class="sr-only">ノート検索</label>
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" aria-hidden="true"></i>
+                        <input type="text" 
+                               id="main-search"
+                               class="app-input pl-10 md:pl-12"
+                               placeholder="ノートを検索（タイトル、企業名、タグ、内容）"
+                               aria-describedby="search-help">
+                        
+                        <!-- 検索オプション -->
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                            <button type="button" 
+                                    class="search-option-toggle app-btn app-btn--ghost p-1"
+                                    onclick="toggleAdvancedSearch()"
+                                    aria-expanded="false"
+                                    aria-label="詳細検索オプション"
+                                    title="詳細検索">
+                                <i data-lucide="sliders-horizontal" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" 
+                                    class="clear-search app-btn app-btn--ghost p-1 hidden"
+                                    onclick="clearSearch()"
+                                    aria-label="検索をクリア"
+                                    title="検索をクリア">
+                                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="search-help" class="text-xs text-gray-500 mt-1">
+                        複数キーワードはスペースで区切ってください
+                    </div>
+                </div>
+
+                <!-- 詳細検索オプション -->
+                <div id="advanced-search" class="advanced-search hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                        <!-- タグフィルター -->
+                        <div class="filter-group">
+                            <label for="tag-filter" class="block text-sm font-medium text-gray-700 mb-1">
+                                タグ
+                            </label>
+                            <select id="tag-filter" 
+                                    class="app-select text-sm"
+                                    onchange="applyFilters()"
+                                    aria-describedby="tag-filter-help">
+                                <option value="">すべてのタグ</option>
+                                <option value="高配当">高配当</option>
+                                <option value="成長株">成長株</option>
+                                <option value="バリュー投資">バリュー投資</option>
+                                <option value="決算分析">決算分析</option>
+                                <option value="テクニカル">テクニカル</option>
+                            </select>
+                            <div id="tag-filter-help" class="text-xs text-gray-500 mt-1">
+                                特定のタグでフィルター
+                            </div>
+                        </div>
+
+                        <!-- 業界フィルター -->
+                        <div class="filter-group">
+                            <label for="industry-filter" class="block text-sm font-medium text-gray-700 mb-1">
+                                業界
+                            </label>
+                            <select id="industry-filter" 
+                                    class="app-select text-sm"
+                                    onchange="applyFilters()">
+                                <option value="">すべての業界</option>
+                                <option value="自動車">自動車</option>
+                                <option value="IT">IT・通信</option>
+                                <option value="金融">金融</option>
+                                <option value="製造業">製造業</option>
+                                <option value="小売">小売</option>
+                                <option value="不動産">不動産</option>
+                            </select>
+                        </div>
+
+                        <!-- 期間フィルター -->
+                        <div class="filter-group">
+                            <label for="period-filter" class="block text-sm font-medium text-gray-700 mb-1">
+                                作成期間
+                            </label>
+                            <select id="period-filter" 
+                                    class="app-select text-sm"
+                                    onchange="applyFilters()">
+                                <option value="">すべての期間</option>
+                                <option value="today">今日</option>
+                                <option value="week">今週</option>
+                                <option value="month">今月</option>
+                                <option value="quarter">3ヶ月</option>
+                                <option value="year">1年</option>
+                            </select>
+                        </div>
+
+                        <!-- 記録数フィルター -->
+                        <div class="filter-group">
+                            <label for="entry-count-filter" class="block text-sm font-medium text-gray-700 mb-1">
+                                記録数
+                            </label>
+                            <select id="entry-count-filter" 
+                                    class="app-select text-sm"
+                                    onchange="applyFilters()">
+                                <option value="">すべて</option>
+                                <option value="0">記録なし</option>
+                                <option value="1-5">1-5件</option>
+                                <option value="6-10">6-10件</option>
+                                <option value="11+">11件以上</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- フィルタークリア -->
+                    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
+                        <div class="active-filters flex flex-wrap gap-2" id="active-filters">
+                            <!-- アクティブなフィルターがここに表示される -->
+                        </div>
+                        <button type="button" 
+                                class="app-btn app-btn--ghost app-btn--sm"
+                                onclick="clearAllFilters()">
+                            <i data-lucide="x-circle" class="w-4 h-4" aria-hidden="true"></i>
+                            すべてクリア
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 検索結果サマリー -->
+                <div id="search-summary" class="search-summary mt-3 text-sm text-gray-600 hidden">
+                    <!-- 検索結果の統計がここに表示される -->
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- ノート一覧 -->
-    {% if page_obj.object_list %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for notebook in page_obj.object_list %}
-            <div class="tw-card hover:shadow-lg transition-shadow">
-                <div class="tw-card-content p-6">
-                    <a href="{% url 'notebook_detail' notebook.pk %}" class="block">
-                        <div class="flex items-start justify-between mb-3">
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-lg mb-1">{{ notebook.title }}</h3>
-                                <p class="text-gray-600 text-sm">{{ notebook.subtitle }}</p>
-                            </div>
-                            <span class="text-xs text-gray-500">{{ notebook.updated_at|timesince }}前</span>
-                        </div>
-                        
-                        <div class="space-y-2 mb-4">
-                            {% if notebook.current_price and notebook.target_price %}
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">現在価格:</span>
-                                    <span class="font-semibold">¥{{ notebook.current_price|floatformat:0 }}</span>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-gray-600">目標価格:</span>
-                                    <span class="font-semibold text-green-600">¥{{ notebook.target_price|floatformat:0 }}</span>
-                                </div>
-                                {% if notebook.price_change_percent %}
-                                    <div class="flex justify-between text-sm">
-                                        <span class="text-gray-600">目標まで:</span>
-                                        <span class="font-semibold {% if notebook.price_change_percent > 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                                            {{ notebook.price_change_percent|floatformat:1 }}%
-                                        </span>
-                                    </div>
+    <main class="notebook-list__main">
+        <!-- ローディング表示 -->
+        <div id="loading-indicator" class="loading-indicator text-center py-8 hidden">
+            <div class="inline-flex items-center gap-2 text-gray-600">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600" aria-hidden="true"></div>
+                <span>検索中...</span>
+            </div>
+        </div>
+
+        <!-- グリッド表示 -->
+        <div id="notebooks-grid" class="notebooks-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {% for notebook in notebooks %}
+            <article class="notebook-card app-card cursor-pointer transition-all duration-200 hover:shadow-md"
+                     data-notebook-id="{{ notebook.pk }}"
+                     data-title="{{ notebook.title|lower }}"
+                     data-company="{{ notebook.company_name|lower }}"
+                     data-tags="{% for tag in notebook.tags.all %}{{ tag.name|lower }} {% endfor %}"
+                     data-created="{{ notebook.created_at|date:'Y-m-d' }}"
+                     data-updated="{{ notebook.updated_at|date:'Y-m-d' }}"
+                     data-entry-count="{{ notebook.entry_count }}"
+                     role="link"
+                     aria-labelledby="notebook-{{ notebook.pk }}-title"
+                     tabindex="0"
+                     onclick="window.location.href='{% url 'notebook_detail' notebook.pk %}'"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{% url 'notebook_detail' notebook.pk %}'}">
+                
+                <div class="app-card__content p-4 md:p-6">
+                    <!-- ノートヘッダー -->
+                    <header class="notebook-card__header mb-3">
+                        <h3 id="notebook-{{ notebook.pk }}-title" class="font-semibold text-lg text-gray-900 mb-1 line-clamp-2">
+                            {{ notebook.title }}
+                        </h3>
+                        {% if notebook.subtitle %}
+                            <p class="text-sm text-gray-600 line-clamp-2">{{ notebook.subtitle }}</p>
+                        {% endif %}
+                    </header>
+
+                    <!-- 価格情報 -->
+                    <div class="notebook-card__prices grid grid-cols-2 gap-3 mb-3">
+                        <div class="price-item">
+                            <span class="text-xs text-gray-500">現在価格</span>
+                            <div class="font-semibold text-gray-900">
+                                {% if notebook.current_price %}
+                                    ¥{{ notebook.current_price|floatformat:0 }}
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
                                 {% endif %}
-                            {% endif %}
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">記録数:</span>
-                                <span class="font-semibold">{{ notebook.entry_count }}件</span>
                             </div>
                         </div>
-                        
-                        <div class="flex flex-wrap gap-1">
+                        <div class="price-item">
+                            <span class="text-xs text-gray-500">目標価格</span>
+                            <div class="font-semibold text-green-600">
+                                {% if notebook.target_price %}
+                                    ¥{{ notebook.target_price|floatformat:0 }}
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </div>
                         </div>
-                    </a>
-                    
-                    <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
-                        <a href="{% url 'notebook_edit' notebook.pk %}" class="tw-btn-ghost tw-btn-sm">
-                            <i data-lucide="edit" class="w-4 h-4"></i>
-                        </a>
-                        <a href="{% url 'entry_create' notebook.pk %}" class="tw-btn-ghost tw-btn-sm">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                        </a>
                     </div>
+
+                    <!-- 進捗バー -->
+                    {% if notebook.current_price and notebook.target_price %}
+                    <div class="progress-section mb-3">
+                        <div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+                            <span>目標達成度</span>
+                            <span class="font-medium {% if notebook.price_change_percent > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                {{ notebook.price_change_percent|floatformat:1 }}%
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                                 style="width: {% if notebook.price_change_percent > 0 %}{{ notebook.price_change_percent|add:50 }}%{% else %}50%{% endif %}; max-width: 100%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- メタ情報 -->
+                    <div class="notebook-card__meta flex items-center justify-between text-xs text-gray-500 mb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-3 h-3" aria-hidden="true"></i>
+                                {{ notebook.entry_count }}件
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="clock" class="w-3 h-3" aria-hidden="true"></i>
+                                {{ notebook.updated_at|timesince }}前
+                            </span>
+                        </div>
+                        
+                        <!-- AI分析バッジ -->
+                        <div class="ai-badge hidden" data-notebook-id="{{ notebook.pk }}">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                <i data-lucide="sparkles" class="w-3 h-3" aria-hidden="true"></i>
+                                <span class="ai-depth-indicator">-</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- タグ -->
+                    <div class="notebook-card__tags flex flex-wrap gap-1 mb-3">
+                        {% for tag in notebook.tags.all|slice:":3" %}
+                            <span class="app-badge app-badge--outline text-xs">
+                                #{{ tag.name }}
+                            </span>
+                        {% endfor %}
+                        {% if notebook.tags.count > 3 %}
+                            <span class="text-xs text-gray-500">+{{ notebook.tags.count|add:"-3" }}個</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- アクション -->
+                    <footer class="notebook-card__actions flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <button class="action-btn app-btn app-btn--ghost app-btn--sm p-1"
+                                    onclick="event.stopPropagation(); quickEdit({{ notebook.pk }})"
+                                    aria-label="{{ notebook.title }}をクイック編集"
+                                    title="クイック編集">
+                                <i data-lucide="edit" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                            <button class="action-btn app-btn app-btn--ghost app-btn--sm p-1"
+                                    onclick="event.stopPropagation(); addEntry({{ notebook.pk }})"
+                                    aria-label="{{ notebook.title }}に記録追加"
+                                    title="記録追加">
+                                <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                            <button class="action-btn app-btn app-btn--ghost app-btn--sm p-1"
+                                    onclick="event.stopPropagation(); toggleBookmark({{ notebook.pk }})"
+                                    aria-label="{{ notebook.title }}をブックマーク"
+                                    title="ブックマーク"
+                                    data-bookmarked="false">
+                                <i data-lucide="star" class="w-4 h-4" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-gray-500">詳細を見る</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                    </footer>
+                </div>
+            </article>
+            {% empty %}
+            <div class="col-span-full">
+                <div class="empty-state text-center py-12">
+                    <i data-lucide="book-open" class="w-16 h-16 mx-auto mb-4 text-gray-300" aria-hidden="true"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">ノートがありません</h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        最初のノートを作成して投資分析を始めましょう
+                    </p>
+                    <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary">
+                        <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                        最初のノートを作成
+                    </a>
                 </div>
             </div>
             {% endfor %}
         </div>
 
-        <!-- ページネーション -->
-        {% if page_obj.has_other_pages %}
-            <div class="flex justify-center mt-8">
-                <nav class="flex items-center gap-2">
-                    {% if page_obj.has_previous %}
-                        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">最初</a>
-                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">前へ</a>
-                    {% endif %}
-                    
-                    <span class="px-4 py-2 text-sm">
-                        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-                    </span>
-                    
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">次へ</a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">最後</a>
-                    {% endif %}
-                </nav>
-            </div>
-        {% endif %}
-    {% else %}
-        <div class="text-center py-12">
-            {% if search_query %}
-                <i data-lucide="search" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">検索結果がありません</h3>
-                <p class="text-gray-600 mb-4">「{{ search_query }}」に一致するノートが見つかりませんでした</p>
-                <a href="{% url 'notebook_list' %}" class="tw-btn-outline">すべてのノートを表示</a>
-            {% else %}
-                <i data-lucide="book-open" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">ノートがありません</h3>
-                <p class="text-gray-600 mb-4">最初のノートを作成して投資分析を始めましょう</p>
-                <a href="{% url 'notebook_create' %}" class="tw-btn-primary">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    最初のノートを作成
-                </a>
-            {% endif %}
+        <!-- リスト表示 -->
+        <div id="notebooks-list" class="notebooks-list space-y-3 hidden">
+            {% for notebook in notebooks %}
+            <article class="notebook-list-item app-card cursor-pointer transition-all duration-200 hover:shadow-sm"
+                     data-notebook-id="{{ notebook.pk }}"
+                     data-title="{{ notebook.title|lower }}"
+                     data-company="{{ notebook.company_name|lower }}"
+                     data-tags="{% for tag in notebook.tags.all %}{{ tag.name|lower }} {% endfor %}"
+                     data-created="{{ notebook.created_at|date:'Y-m-d' }}"
+                     data-updated="{{ notebook.updated_at|date:'Y-m-d' }}"
+                     data-entry-count="{{ notebook.entry_count }}"
+                     role="link"
+                     aria-labelledby="list-notebook-{{ notebook.pk }}-title"
+                     tabindex="0"
+                     onclick="window.location.href='{% url 'notebook_detail' notebook.pk %}'"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{% url 'notebook_detail' notebook.pk %}'}">
+                
+                <div class="app-card__content p-4">
+                    <div class="flex items-center gap-4">
+                        <!-- ノート情報 -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <h3 id="list-notebook-{{ notebook.pk }}-title" class="font-semibold text-base text-gray-900 truncate">
+                                        {{ notebook.title }}
+                                    </h3>
+                                    {% if notebook.subtitle %}
+                                        <p class="text-sm text-gray-600 truncate mt-1">{{ notebook.subtitle }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- 価格情報（横並び） -->
+                                <div class="flex items-center gap-4 ml-4 text-sm">
+                                    <div class="text-center">
+                                        <span class="text-xs text-gray-500 block">現在価格</span>
+                                        <span class="font-semibold">
+                                            {% if notebook.current_price %}
+                                                ¥{{ notebook.current_price|floatformat:0 }}
+                                            {% else %}
+                                                <span class="text-gray-400">-</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-xs text-gray-500 block">目標価格</span>
+                                        <span class="font-semibold text-green-600">
+                                            {% if notebook.target_price %}
+                                                ¥{{ notebook.target_price|floatformat:0 }}
+                                            {% else %}
+                                                <span class="text-gray-400">-</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    {% if notebook.current_price and notebook.target_price %}
+                                    <div class="text-center">
+                                        <span class="text-xs text-gray-500 block">達成度</span>
+                                        <span class="font-semibold {% if notebook.price_change_percent > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ notebook.price_change_percent|floatformat:1 }}%
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- メタ情報とタグ -->
+                            <div class="flex items-center justify-between mt-3">
+                                <div class="flex items-center gap-4 text-xs text-gray-500">
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="file-text" class="w-3 h-3" aria-hidden="true"></i>
+                                        {{ notebook.entry_count }}件の記録
+                                    </span>
+                                    <span class="flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3 h-3" aria-hidden="true"></i>
+                                        {{ notebook.updated_at|timesince }}前更新
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <!-- タグ（リスト表示では少数表示） -->
+                                    <div class="flex gap-1">
+                                        {% for tag in notebook.tags.all|slice:":2" %}
+                                            <span class="app-badge app-badge--outline text-xs">
+                                                #{{ tag.name }}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <!-- アクションボタン -->
+                                    <div class="flex items-center gap-1">
+                                        <button class="action-btn app-btn app-btn--ghost app-btn--sm p-1"
+                                                onclick="event.stopPropagation(); quickEdit({{ notebook.pk }})"
+                                                aria-label="{{ notebook.title }}をクイック編集">
+                                            <i data-lucide="edit" class="w-4 h-4" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="action-btn app-btn app-btn--ghost app-btn--sm p-1"
+                                                onclick="event.stopPropagation(); addEntry({{ notebook.pk }})"
+                                                aria-label="{{ notebook.title }}に記録追加">
+                                            <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
         </div>
-    {% endif %}
+
+        <!-- 検索結果なし -->
+        <div id="no-results" class="no-results text-center py-12 hidden">
+            <i data-lucide="search-x" class="w-16 h-16 mx-auto mb-4 text-gray-300" aria-hidden="true"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">検索結果が見つかりません</h3>
+            <p class="text-sm text-gray-600 mb-4">
+                検索条件を変更するか、フィルターをリセットしてお試しください
+            </p>
+            <button onclick="clearAllFilters()" class="app-btn app-btn--secondary">
+                <i data-lucide="refresh-cw" class="w-4 h-4" aria-hidden="true"></i>
+                フィルターをリセット
+            </button>
+        </div>
+
+        <!-- ページネーション -->
+        {% if notebooks.has_other_pages %}
+        <nav class="pagination-nav flex justify-center mt-8" aria-label="ページネーション">
+            <div class="flex items-center gap-2">
+                {% if notebooks.has_previous %}
+                    <a href="?page=1" 
+                       class="app-btn app-btn--secondary app-btn--sm"
+                       aria-label="最初のページ">
+                        <i data-lucide="chevrons-left" class="w-4 h-4" aria-hidden="true"></i>
+                    </a>
+                    <a href="?page={{ notebooks.previous_page_number }}" 
+                       class="app-btn app-btn--secondary app-btn--sm">
+                        <i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>
+                        前へ
+                    </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 text-sm text-gray-600">
+                    {{ notebooks.number }} / {{ notebooks.paginator.num_pages }}
+                </span>
+                
+                {% if notebooks.has_next %}
+                    <a href="?page={{ notebooks.next_page_number }}" 
+                       class="app-btn app-btn--secondary app-btn--sm">
+                        次へ
+                        <i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>
+                    </a>
+                    <a href="?page={{ notebooks.paginator.num_pages }}" 
+                       class="app-btn app-btn--secondary app-btn--sm"
+                       aria-label="最後のページ">
+                        <i data-lucide="chevrons-right" class="w-4 h-4" aria-hidden="true"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </nav>
+        {% endif %}
+    </main>
 </div>
+
+<!-- クイック編集モーダル -->
+<div id="quick-edit-modal" class="modal fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm hidden" aria-hidden="true">
+    <div class="modal-content bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto mt-16 max-h-[80vh] overflow-hidden">
+        <div class="modal-header p-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">クイック編集</h3>
+                <button type="button" 
+                        class="app-btn app-btn--ghost p-2"
+                        onclick="closeQuickEditModal()"
+                        aria-label="モーダルを閉じる">
+                    <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <form id="quick-edit-form" class="modal-body p-4 space-y-4">
+            <div class="form-field">
+                <label for="quick-title" class="block text-sm font-medium text-gray-700 mb-1">
+                    タイトル
+                </label>
+                <input type="text" 
+                       id="quick-title"
+                       class="app-input"
+                       required>
+            </div>
+            <div class="form-field">
+                <label for="quick-subtitle" class="block text-sm font-medium text-gray-700 mb-1">
+                    サブタイトル
+                </label>
+                <input type="text" 
+                       id="quick-subtitle"
+                       class="app-input">
+            </div>
+            <div class="form-field">
+                <label for="quick-tags" class="block text-sm font-medium text-gray-700 mb-1">
+                    タグ
+                </label>
+                <input type="text" 
+                       id="quick-tags"
+                       class="app-input"
+                       placeholder="カンマ区切りで入力">
+            </div>
+            <div class="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                <button type="button" 
+                        onclick="closeQuickEditModal()"
+                        class="app-btn app-btn--secondary">
+                    キャンセル
+                </button>
+                <button type="submit" class="app-btn app-btn--primary">
+                    <i data-lucide="save" class="w-4 h-4" aria-hidden="true"></i>
+                    保存
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    // グローバル変数
+    let currentView = 'grid';
+    let currentSort = 'updated_desc';
+    let searchTimeout;
+    let allNotebooks = [];
+    let filteredNotebooks = [];
+
+    // 初期化
+    function initializeNotebookList() {
+        // ノートデータを収集
+        collectNotebookData();
+        
+        // 検索機能の設定
+        setupSearch();
+        
+        // AI分析バッジの読み込み
+        loadAIInsightsBadges();
+        
+        // URL パラメータからの復元
+        restoreFromURL();
+        
+        // 初期フィルタリング
+        applyFilters();
+    }
+
+    // ノートデータ収集
+    function collectNotebookData() {
+        const notebookElements = document.querySelectorAll('[data-notebook-id]');
+        allNotebooks = Array.from(notebookElements).map(element => {
+            return {
+                id: element.dataset.notebookId,
+                title: element.dataset.title,
+                company: element.dataset.company,
+                tags: element.dataset.tags.trim(),
+                created: element.dataset.created,
+                updated: element.dataset.updated,
+                entryCount: parseInt(element.dataset.entryCount),
+                element: element
+            };
+        });
+        filteredNotebooks = [...allNotebooks];
+    }
+
+    // 検索機能設定
+    function setupSearch() {
+        const searchInput = document.getElementById('main-search');
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            // クリアボタンの表示/非表示
+            const clearButton = document.querySelector('.clear-search');
+            if (query) {
+                clearButton.classList.remove('hidden');
+            } else {
+                clearButton.classList.add('hidden');
+            }
+            
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+    }
+
+    // 検索実行
+    function performSearch(query) {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        
+        // ローディング表示
+        loadingIndicator.classList.remove('hidden');
+        
+        setTimeout(() => {
+            if (!query) {
+                filteredNotebooks = [...allNotebooks];
+            } else {
+                const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+                
+                filteredNotebooks = allNotebooks.filter(notebook => {
+                    const searchText = `${notebook.title} ${notebook.company} ${notebook.tags}`.toLowerCase();
+                    return searchTerms.every(term => searchText.includes(term));
+                });
+            }
+            
+            // フィルターを適用
+            applyFilters();
+            
+            // ローディング非表示
+            loadingIndicator.classList.add('hidden');
+            
+            // 検索結果サマリーを更新
+            updateSearchSummary(query);
+        }, 200);
+    }
+
+    // フィルター適用
+    function applyFilters() {
+        let filtered = [...filteredNotebooks];
+        
+        // タグフィルター
+        const tagFilter = document.getElementById('tag-filter').value;
+        if (tagFilter) {
+            filtered = filtered.filter(notebook => 
+                notebook.tags.includes(tagFilter.toLowerCase())
+            );
+        }
+        
+        // 業界フィルター（実装時に追加）
+        const industryFilter = document.getElementById('industry-filter').value;
+        if (industryFilter) {
+            // 業界情報が必要な場合は実装
+        }
+        
+        // 期間フィルター
+        const periodFilter = document.getElementById('period-filter').value;
+        if (periodFilter) {
+            const now = new Date();
+            const filterDate = new Date();
+            
+            switch (periodFilter) {
+                case 'today':
+                    filterDate.setDate(now.getDate() - 1);
+                    break;
+                case 'week':
+                    filterDate.setDate(now.getDate() - 7);
+                    break;
+                case 'month':
+                    filterDate.setMonth(now.getMonth() - 1);
+                    break;
+                case 'quarter':
+                    filterDate.setMonth(now.getMonth() - 3);
+                    break;
+                case 'year':
+                    filterDate.setFullYear(now.getFullYear() - 1);
+                    break;
+            }
+            
+            filtered = filtered.filter(notebook => 
+                new Date(notebook.created) >= filterDate
+            );
+        }
+        
+        // 記録数フィルター
+        const entryCountFilter = document.getElementById('entry-count-filter').value;
+        if (entryCountFilter) {
+            switch (entryCountFilter) {
+                case '0':
+                    filtered = filtered.filter(notebook => notebook.entryCount === 0);
+                    break;
+                case '1-5':
+                    filtered = filtered.filter(notebook => notebook.entryCount >= 1 && notebook.entryCount <= 5);
+                    break;
+                case '6-10':
+                    filtered = filtered.filter(notebook => notebook.entryCount >= 6 && notebook.entryCount <= 10);
+                    break;
+                case '11+':
+                    filtered = filtered.filter(notebook => notebook.entryCount >= 11);
+                    break;
+            }
+        }
+        
+        // ソートを適用
+        applySortingToFiltered(filtered);
+        
+        // 表示を更新
+        updateDisplay(filtered);
+        
+        // アクティブフィルターを更新
+        updateActiveFilters();
+    }
+
+    // ソート適用
+    function applySorting(sortType) {
+        currentSort = sortType;
+        applySortingToFiltered(filteredNotebooks);
+        updateDisplay(filteredNotebooks);
+        closeSortMenu();
+        updateSortMenuUI();
+    }
+
+    function applySortingToFiltered(notebooks) {
+        notebooks.sort((a, b) => {
+            switch (currentSort) {
+                case 'updated_desc':
+                    return new Date(b.updated) - new Date(a.updated);
+                case 'updated_asc':
+                    return new Date(a.updated) - new Date(b.updated);
+                case 'created_desc':
+                    return new Date(b.created) - new Date(a.created);
+                case 'title_asc':
+                    return a.title.localeCompare(b.title);
+                case 'entry_count_desc':
+                    return b.entryCount - a.entryCount;
+                default:
+                    return 0;
+            }
+        });
+    }
+
+    // 表示更新
+    function updateDisplay(notebooks) {
+        const gridContainer = document.getElementById('notebooks-grid');
+        const listContainer = document.getElementById('notebooks-list');
+        const noResults = document.getElementById('no-results');
+        
+        // すべてのノートを非表示
+        allNotebooks.forEach(notebook => {
+            notebook.element.style.display = 'none';
+        });
+        
+        if (notebooks.length === 0) {
+            // 検索結果なし
+            gridContainer.style.display = 'none';
+            listContainer.style.display = 'none';
+            noResults.classList.remove('hidden');
+        } else {
+            // 結果あり
+            noResults.classList.add('hidden');
+            
+            // 現在の表示モードに応じて表示
+            if (currentView === 'grid') {
+                gridContainer.style.display = 'grid';
+                listContainer.style.display = 'none';
+            } else {
+                gridContainer.style.display = 'none';
+                listContainer.style.display = 'block';
+            }
+            
+            // フィルタリングされたノートを表示
+            notebooks.forEach(notebook => {
+                notebook.element.style.display = 'block';
+            });
+        }
+    }
+
+    // 表示モード切り替え
+    function switchView(viewType) {
+        const gridContainer = document.getElementById('notebooks-grid');
+        const listContainer = document.getElementById('notebooks-list');
+        const viewToggles = document.querySelectorAll('.view-toggle');
+        
+        currentView = viewType;
+        
+        // ボタンの状態更新
+        viewToggles.forEach(toggle => {
+            const isActive = toggle.dataset.view === viewType;
+            toggle.setAttribute('aria-pressed', isActive);
+            if (isActive) {
+                toggle.classList.add('bg-blue-100', 'border-blue-300', 'text-blue-700');
+            } else {
+                toggle.classList.remove('bg-blue-100', 'border-blue-300', 'text-blue-700');
+            }
+        });
+        
+        // 表示切り替え
+        if (viewType === 'grid') {
+            gridContainer.style.display = filteredNotebooks.length > 0 ? 'grid' : 'none';
+            listContainer.style.display = 'none';
+        } else {
+            gridContainer.style.display = 'none';
+            listContainer.style.display = filteredNotebooks.length > 0 ? 'block' : 'none';
+        }
+        
+        // 設定を保存
+        localStorage.setItem('notebook_list_view', viewType);
+    }
+
+    // 詳細検索切り替え
+    function toggleAdvancedSearch() {
+        const advancedSearch = document.getElementById('advanced-search');
+        const toggleButton = document.querySelector('.search-option-toggle');
+        const isExpanded = !advancedSearch.classList.contains('hidden');
+        
+        if (isExpanded) {
+            advancedSearch.classList.add('hidden');
+            toggleButton.setAttribute('aria-expanded', 'false');
+        } else {
+            advancedSearch.classList.remove('hidden');
+            toggleButton.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    // ソートメニュー切り替え
+    function toggleSortMenu() {
+        const sortMenu = document.getElementById('sort-menu');
+        const triggerButton = document.getElementById('sort-menu-trigger');
+        const isExpanded = !sortMenu.classList.contains('hidden');
+        
+        if (isExpanded) {
+            closeSortMenu();
+        } else {
+            sortMenu.classList.remove('hidden');
+            triggerButton.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function closeSortMenu() {
+        const sortMenu = document.getElementById('sort-menu');
+        const triggerButton = document.getElementById('sort-menu-trigger');
+        
+        sortMenu.classList.add('hidden');
+        triggerButton.setAttribute('aria-expanded', 'false');
+    }
+
+    // ソートメニューUI更新
+    function updateSortMenuUI() {
+        const sortOptions = document.querySelectorAll('.sort-option');
+        
+        sortOptions.forEach(option => {
+            if (option.dataset.sort === currentSort) {
+                option.classList.add('bg-blue-50', 'text-blue-700');
+            } else {
+                option.classList.remove('bg-blue-50', 'text-blue-700');
+            }
+        });
+    }
+
+    // アクティブフィルター表示更新
+    function updateActiveFilters() {
+        const container = document.getElementById('active-filters');
+        const filters = [];
+        
+        // 各フィルターをチェック
+        const tagFilter = document.getElementById('tag-filter').value;
+        if (tagFilter) {
+            filters.push({ label: `タグ: ${tagFilter}`, clear: () => document.getElementById('tag-filter').value = '' });
+        }
+        
+        const industryFilter = document.getElementById('industry-filter').value;
+        if (industryFilter) {
+            filters.push({ label: `業界: ${industryFilter}`, clear: () => document.getElementById('industry-filter').value = '' });
+        }
+        
+        const periodFilter = document.getElementById('period-filter').value;
+        if (periodFilter) {
+            const periodLabels = {
+                'today': '今日',
+                'week': '今週',
+                'month': '今月',
+                'quarter': '3ヶ月',
+                'year': '1年'
+            };
+            filters.push({ label: `期間: ${periodLabels[periodFilter]}`, clear: () => document.getElementById('period-filter').value = '' });
+        }
+        
+        const entryCountFilter = document.getElementById('entry-count-filter').value;
+        if (entryCountFilter) {
+            const entryLabels = {
+                '0': '記録なし',
+                '1-5': '1-5件',
+                '6-10': '6-10件',
+                '11+': '11件以上'
+            };
+            filters.push({ label: `記録数: ${entryLabels[entryCountFilter]}`, clear: () => document.getElementById('entry-count-filter').value = '' });
+        }
+        
+        // フィルターバッジを表示
+        container.innerHTML = filters.map(filter => `
+            <span class="active-filter inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                ${filter.label}
+                <button type="button" 
+                        class="filter-remove hover:text-blue-900"
+                        onclick="removeFilter('${filter.label}')"
+                        aria-label="${filter.label}フィルターを削除">
+                    <i data-lucide="x" class="w-3 h-3" aria-hidden="true"></i>
+                </button>
+            </span>
+        `).join('');
+        
+        lucide.createIcons();
+    }
+
+    // 検索結果サマリー更新
+    function updateSearchSummary(query) {
+        const summary = document.getElementById('search-summary');
+        const totalCount = allNotebooks.length;
+        const filteredCount = filteredNotebooks.length;
+        
+        if (query || hasActiveFilters()) {
+            summary.innerHTML = `
+                ${filteredCount}件のノートが見つかりました（全${totalCount}件中）
+                ${query ? `「${query}」の検索結果` : ''}
+            `;
+            summary.classList.remove('hidden');
+        } else {
+            summary.classList.add('hidden');
+        }
+    }
+
+    // アクティブフィルターの有無をチェック
+    function hasActiveFilters() {
+        return document.getElementById('tag-filter').value ||
+               document.getElementById('industry-filter').value ||
+               document.getElementById('period-filter').value ||
+               document.getElementById('entry-count-filter').value;
+    }
+
+    // 検索・フィルタークリア
+    function clearSearch() {
+        document.getElementById('main-search').value = '';
+        document.querySelector('.clear-search').classList.add('hidden');
+        performSearch('');
+    }
+
+    function clearAllFilters() {
+        // すべてのフィルターをリセット
+        document.getElementById('tag-filter').value = '';
+        document.getElementById('industry-filter').value = '';
+        document.getElementById('period-filter').value = '';
+        document.getElementById('entry-count-filter').value = '';
+        
+        // 検索もクリア
+        clearSearch();
+        
+        // フィルターを再適用
+        applyFilters();
+    }
+
+    // AI分析バッジ読み込み
+    function loadAIInsightsBadges() {
+        // 各ノートのAI分析データを非同期で読み込み
+        allNotebooks.forEach(notebook => {
+            loadNotebookAIBadge(notebook.id);
+        });
+    }
+
+    function loadNotebookAIBadge(notebookId) {
+        fetch(`/api/insights/${notebookId}/summary/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayAIBadge(notebookId, data.summary);
+                }
+            })
+            .catch(error => {
+                // サイレントに失敗
+            });
+    }
+
+    function displayAIBadge(notebookId, summary) {
+        const badge = document.querySelector(`[data-notebook-id="${notebookId}"] .ai-badge`);
+        const indicator = badge.querySelector('.ai-depth-indicator');
+        
+        const depthLabels = {
+            'detailed': '詳細',
+            'moderate': '中程度',
+            'basic': '基本'
+        };
+        
+        indicator.textContent = depthLabels[summary.analysis_depth] || '分析済み';
+        badge.classList.remove('hidden');
+    }
+
+    // クイックアクション
+    function quickEdit(notebookId) {
+        // モーダルを開いてクイック編集
+        openQuickEditModal(notebookId);
+    }
+
+    function addEntry(notebookId) {
+        window.location.href = `/notebooks/${notebookId}/entries/create/`;
+    }
+
+    function toggleBookmark(notebookId) {
+        const button = event.target.closest('button');
+        const isBookmarked = button.dataset.bookmarked === 'true';
+        
+        // ブックマーク状態を切り替え
+        button.dataset.bookmarked = !isBookmarked;
+        const icon = button.querySelector('i');
+        
+        if (!isBookmarked) {
+            icon.setAttribute('data-lucide', 'star-filled');
+            button.classList.add('text-yellow-500');
+        } else {
+            icon.setAttribute('data-lucide', 'star');
+            button.classList.remove('text-yellow-500');
+        }
+        
+        lucide.createIcons();
+        
+        // サーバーに送信（実装時）
+        // sendBookmarkUpdate(notebookId, !isBookmarked);
+    }
+
+    // クイック編集モーダル
+    function openQuickEditModal(notebookId) {
+        const modal = document.getElementById('quick-edit-modal');
+        
+        // ノートデータを取得してフォームに設定（実装時）
+        // loadNotebookForQuickEdit(notebookId);
+        
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        
+        // フォーカスを設定
+        const firstInput = modal.querySelector('input');
+        if (firstInput) firstInput.focus();
+    }
+
+    function closeQuickEditModal() {
+        const modal = document.getElementById('quick-edit-modal');
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    // URLからの復元
+    function restoreFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        const view = urlParams.get('view');
+        const sort = urlParams.get('sort');
+        
+        if (query) {
+            document.getElementById('main-search').value = query;
+        }
+        
+        if (view && ['grid', 'list'].includes(view)) {
+            switchView(view);
+        } else {
+            // ローカルストレージから復元
+            const savedView = localStorage.getItem('notebook_list_view');
+            if (savedView) {
+                switchView(savedView);
+            }
+        }
+        
+        if (sort) {
+            applySorting(sort);
+        }
+    }
+
+    // 外部クリックでメニューを閉じる
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#sort-menu, #sort-menu-trigger')) {
+            closeSortMenu();
+        }
+    });
+
+    // ESCキーでモーダルを閉じる
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeQuickEditModal();
+            closeSortMenu();
+        }
+    });
+
+    // クイック編集フォーム送信
+    document.getElementById('quick-edit-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // 実装時: フォームデータを送信
+        closeQuickEditModal();
+    });
+
+    // DOMロード後に実行
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeNotebookList();
+        updateSortMenuUI();
+    });
+</script>
 {% endblock %}
