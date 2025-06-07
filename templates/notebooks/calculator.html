@@ -1,0 +1,506 @@
+
+<!-- templates/notebooks/calculator.html -->
+{% extends 'base.html' %}
+{% load notebook_extras %}
+
+{% block title %}投資計算ツール - 株式分析記録アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-4 space-y-6">
+    <!-- ヘッダー -->
+    <div class="flex items-center gap-4">
+        <a href="{% url 'dashboard' %}" class="tw-btn-outline tw-btn-sm">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            戻る
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">投資計算ツール</h1>
+            <p class="text-gray-600">投資判断に必要な各種計算を簡単に実行できます</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 配当利回り計算 -->
+        <div class="tw-card">
+            <div class="tw-card-header">
+                <h2 class="tw-card-title flex items-center gap-2">
+                    <i data-lucide="percent" class="w-5 h-5 text-green-600"></i>
+                    配当利回り計算
+                </h2>
+            </div>
+            <div class="tw-card-content">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">年間配当金 (円)</label>
+                        <input type="number" id="dividend-annual" class="tw-input" placeholder="250" step="0.01">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">株価 (円)</label>
+                        <input type="number" id="dividend-price" class="tw-input" placeholder="2845" step="0.01">
+                    </div>
+                    <button onclick="calculateDividendYield()" class="tw-btn-primary w-full">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>
+                        計算実行
+                    </button>
+                    <div id="dividend-result" class="hidden">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-green-800 mb-2">計算結果</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>配当利回り:</span>
+                                    <span class="font-semibold text-green-600" id="yield-rate">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>月間配当予想:</span>
+                                    <span id="monthly-dividend">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>評価:</span>
+                                    <span id="dividend-evaluation">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投資金額計算 -->
+        <div class="tw-card">
+            <div class="tw-card-header">
+                <h2 class="tw-card-title flex items-center gap-2">
+                    <i data-lucide="coins" class="w-5 h-5 text-blue-600"></i>
+                    投資金額計算
+                </h2>
+            </div>
+            <div class="tw-card-content">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">株価 (円)</label>
+                        <input type="number" id="invest-price" class="tw-input" placeholder="2845" step="0.01">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">購入希望株数</label>
+                        <input type="number" id="invest-shares" class="tw-input" placeholder="100" min="1">
+                    </div>
+                    <button onclick="calculateInvestmentAmount()" class="tw-btn-primary w-full">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>
+                        計算実行
+                    </button>
+                    <div id="investment-result" class="hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-blue-800 mb-2">計算結果</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>投資金額:</span>
+                                    <span class="font-semibold" id="total-amount">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>手数料:</span>
+                                    <span id="commission">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>総コスト:</span>
+                                    <span class="font-semibold text-blue-600" id="total-cost">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>1株あたり実質コスト:</span>
+                                    <span id="per-share-cost">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 目標達成率計算 -->
+        <div class="tw-card">
+            <div class="tw-card-header">
+                <h2 class="tw-card-title flex items-center gap-2">
+                    <i data-lucide="target" class="w-5 h-5 text-purple-600"></i>
+                    目標達成率計算
+                </h2>
+            </div>
+            <div class="tw-card-content">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">現在価格 (円)</label>
+                        <input type="number" id="target-current" class="tw-input" placeholder="2845" step="0.01">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">目標価格 (円)</label>
+                        <input type="number" id="target-goal" class="tw-input" placeholder="3200" step="0.01">
+                    </div>
+                    <button onclick="calculateTargetAchievement()" class="tw-btn-primary w-full">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>
+                        計算実行
+                    </button>
+                    <div id="target-result" class="hidden">
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-purple-800 mb-2">計算結果</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>価格差:</span>
+                                    <span class="font-semibold" id="change-amount">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>変動率:</span>
+                                    <span class="font-semibold" id="change-rate">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>評価:</span>
+                                    <span id="target-evaluation">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 複利計算 -->
+        <div class="tw-card">
+            <div class="tw-card-header">
+                <h2 class="tw-card-title flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-orange-600"></i>
+                    複利計算
+                </h2>
+            </div>
+            <div class="tw-card-content">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">元本 (円)</label>
+                        <input type="number" id="compound-principal" class="tw-input" placeholder="1000000" min="1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">年利率 (%)</label>
+                        <input type="number" id="compound-rate" class="tw-input" placeholder="5" step="0.1" min="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">期間 (年)</label>
+                        <input type="number" id="compound-years" class="tw-input" placeholder="10" min="1" max="50">
+                    </div>
+                    <button onclick="calculateCompoundGrowth()" class="tw-btn-primary w-full">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>
+                        計算実行
+                    </button>
+                    <div id="compound-result" class="hidden">
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-orange-800 mb-2">計算結果</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>最終金額:</span>
+                                    <span class="font-semibold text-orange-600" id="final-amount">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>総利益:</span>
+                                    <span class="font-semibold" id="total-gain">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>利益率:</span>
+                                    <span id="gain-rate">-</span>
+                                </div>
+                            </div>
+                            <div id="yearly-breakdown" class="mt-4">
+                                <h4 class="font-medium text-orange-800 mb-2">年次推移</h4>
+                                <div class="text-xs space-y-1 max-h-32 overflow-y-auto" id="yearly-list">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 計算履歴 -->
+    <div class="tw-card">
+        <div class="tw-card-header">
+            <h2 class="tw-card-title flex items-center gap-2">
+                <i data-lucide="history" class="w-5 h-5"></i>
+                計算履歴
+            </h2>
+        </div>
+        <div class="tw-card-content">
+            <div id="calculation-history" class="text-center py-8 text-gray-500">
+                <p>まだ計算履歴がありません</p>
+                <p class="text-sm">上記のツールで計算を実行すると履歴が表示されます</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 計算履歴管理
+let calculationHistory = [];
+
+// 配当利回り計算
+async function calculateDividendYield() {
+    const annualDividend = document.getElementById('dividend-annual').value;
+    const stockPrice = document.getElementById('dividend-price').value;
+    
+    if (!annualDividend || !stockPrice) {
+        alert('すべての項目を入力してください');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/calculate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                type: 'dividend_yield',
+                annual_dividend: parseFloat(annualDividend),
+                stock_price: parseFloat(stockPrice)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const result = data.result;
+            document.getElementById('yield-rate').textContent = result.yield_rate.toFixed(2) + '%';
+            document.getElementById('monthly-dividend').textContent = '¥' + result.monthly_dividend.toFixed(0);
+            document.getElementById('dividend-evaluation').textContent = result.evaluation;
+            document.getElementById('dividend-result').classList.remove('hidden');
+            
+            // 履歴追加
+            addToHistory('配当利回り計算', `${result.yield_rate.toFixed(2)}%`, 
+                        `年間配当¥${annualDividend} / 株価¥${stockPrice}`);
+        } else {
+            alert('計算エラー: ' + (data.result.error || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('通信エラー: ' + error.message);
+    }
+}
+
+// 投資金額計算
+async function calculateInvestmentAmount() {
+    const stockPrice = document.getElementById('invest-price').value;
+    const targetShares = document.getElementById('invest-shares').value;
+    
+    if (!stockPrice || !targetShares) {
+        alert('すべての項目を入力してください');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/calculate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                type: 'investment_amount',
+                stock_price: parseFloat(stockPrice),
+                target_shares: parseInt(targetShares)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const result = data.result;
+            document.getElementById('total-amount').textContent = '¥' + result.total_amount.toLocaleString();
+            document.getElementById('commission').textContent = '¥' + result.commission.toLocaleString();
+            document.getElementById('total-cost').textContent = '¥' + result.total_cost.toLocaleString();
+            document.getElementById('per-share-cost').textContent = '¥' + result.per_share_cost.toFixed(2);
+            document.getElementById('investment-result').classList.remove('hidden');
+            
+            // 履歴追加
+            addToHistory('投資金額計算', `¥${result.total_cost.toLocaleString()}`, 
+                        `${targetShares}株 × ¥${stockPrice}`);
+        } else {
+            alert('計算エラー: ' + (data.result.error || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('通信エラー: ' + error.message);
+    }
+}
+
+// 目標達成率計算
+async function calculateTargetAchievement() {
+    const currentPrice = document.getElementById('target-current').value;
+    const targetPrice = document.getElementById('target-goal').value;
+    
+    if (!currentPrice || !targetPrice) {
+        alert('すべての項目を入力してください');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/calculate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                type: 'target_achievement',
+                current_price: parseFloat(currentPrice),
+                target_price: parseFloat(targetPrice)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const result = data.result;
+            const changeAmountEl = document.getElementById('change-amount');
+            const changeRateEl = document.getElementById('change-rate');
+            
+            changeAmountEl.textContent = (result.change_amount >= 0 ? '+' : '') + '¥' + result.change_amount.toFixed(0);
+            changeRateEl.textContent = (result.change_rate >= 0 ? '+' : '') + result.change_rate.toFixed(2) + '%';
+            
+            // 色分け
+            const colorClass = result.change_rate >= 0 ? 'text-green-600' : 'text-red-600';
+            changeAmountEl.className = `font-semibold ${colorClass}`;
+            changeRateEl.className = `font-semibold ${colorClass}`;
+            
+            document.getElementById('target-evaluation').textContent = result.evaluation;
+            document.getElementById('target-result').classList.remove('hidden');
+            
+            // 履歴追加
+            addToHistory('目標達成率計算', `${(result.change_rate >= 0 ? '+' : '')}${result.change_rate.toFixed(2)}%`, 
+                        `¥${currentPrice} → ¥${targetPrice}`);
+        } else {
+            alert('計算エラー: ' + (data.result.error || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('通信エラー: ' + error.message);
+    }
+}
+
+// 複利計算
+async function calculateCompoundGrowth() {
+    const principal = document.getElementById('compound-principal').value;
+    const annualRate = document.getElementById('compound-rate').value;
+    const years = document.getElementById('compound-years').value;
+    
+    if (!principal || !annualRate || !years) {
+        alert('すべての項目を入力してください');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/calculate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                type: 'compound_growth',
+                principal: parseFloat(principal),
+                annual_rate: parseFloat(annualRate),
+                years: parseInt(years)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const result = data.result;
+            document.getElementById('final-amount').textContent = '¥' + result.final_amount.toLocaleString();
+            document.getElementById('total-gain').textContent = '¥' + result.total_gain.toLocaleString();
+            document.getElementById('gain-rate').textContent = result.gain_rate.toFixed(2) + '%';
+            
+            // 年次推移表示
+            const yearlyList = document.getElementById('yearly-list');
+            yearlyList.innerHTML = '';
+            result.yearly_breakdown.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between';
+                div.innerHTML = `<span>${item.year}年後:</span><span>¥${item.amount.toLocaleString()}</span>`;
+                yearlyList.appendChild(div);
+            });
+            
+            document.getElementById('compound-result').classList.remove('hidden');
+            
+            // 履歴追加
+            addToHistory('複利計算', `¥${result.final_amount.toLocaleString()}`, 
+                        `¥${principal} × ${annualRate}% × ${years}年`);
+        } else {
+            alert('計算エラー: ' + (data.result.error || '不明なエラー'));
+        }
+    } catch (error) {
+        alert('通信エラー: ' + error.message);
+    }
+}
+
+// 計算履歴追加
+function addToHistory(type, result, details) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+    
+    calculationHistory.unshift({
+        type: type,
+        result: result,
+        details: details,
+        time: timeString
+    });
+    
+    // 最大10件まで保持
+    if (calculationHistory.length > 10) {
+        calculationHistory = calculationHistory.slice(0, 10);
+    }
+    
+    updateHistoryDisplay();
+}
+
+// 履歴表示更新
+function updateHistoryDisplay() {
+    const historyContainer = document.getElementById('calculation-history');
+    
+    if (calculationHistory.length === 0) {
+        historyContainer.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>まだ計算履歴がありません</p>
+                <p class="text-sm">上記のツールで計算を実行すると履歴が表示されます</p>
+            </div>
+        `;
+        return;
+    }
+    
+    historyContainer.innerHTML = `
+        <div class="space-y-3">
+            ${calculationHistory.map(item => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <div class="font-medium">${item.type}</div>
+                        <div class="text-sm text-gray-600">${item.details}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-semibold text-blue-600">${item.result}</div>
+                        <div class="text-xs text-gray-500">${item.time}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRFトークンを取得
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    if (!csrftoken) {
+        // CSRFトークンがない場合は作成
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfInput);
+    }
+    
+    // Lucide アイコンの初期化
+    lucide.createIcons();
+});
+</script>
+{% endblock %}

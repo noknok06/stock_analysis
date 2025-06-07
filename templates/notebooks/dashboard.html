@@ -1,0 +1,260 @@
+<!-- templates/notebooks/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}ダッシュボード - 株式分析記録アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 space-y-6">
+    <!-- ヘッダー -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">株式分析ダッシュボード</h1>
+            <p class="text-gray-600">投資判断プロセスを記録・追跡し、投資スキルを向上させる</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button class="tw-btn-outline tw-btn-sm">
+                <i data-lucide="bell" class="w-4 h-4"></i>
+                通知
+            </button>
+            <a href="{% url 'notebook_create' %}" class="tw-btn-primary tw-btn-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                新規ノート
+            </a>
+        </div>
+    </div>
+
+    <!-- インライン検索バー -->
+    {% if user.is_authenticated %}
+    <div class="tw-card">
+        <div class="tw-card-content p-4">
+            <div class="relative">
+                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                <input 
+                    type="text" 
+                    id="inline-search"
+                    placeholder="銘柄名、タグ、記録内容を検索..." 
+                    class="tw-input pl-10 text-lg"
+                />
+                <!-- 検索結果 -->
+                <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto hidden"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 統計サマリー -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="tw-card">
+            <div class="tw-card-content p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">アクティブノート</p>
+                        <p class="text-2xl font-bold">{{ stats.active_notebooks }}</p>
+                        <p class="text-xs text-green-600">+{{ stats.total_notebooks|add:"-5" }}</p>
+                    </div>
+                    <i data-lucide="book-open" class="w-8 h-8 text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="tw-card">
+            <div class="tw-card-content p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">今月の記録</p>
+                        <p class="text-2xl font-bold">{{ stats.monthly_entries }}</p>
+                        <p class="text-xs text-green-600">+5</p>
+                    </div>
+                    <i data-lucide="clock" class="w-8 h-8 text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="tw-card">
+            <div class="tw-card-content p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">総エントリー</p>
+                        <p class="text-2xl font-bold">{{ stats.total_entries }}</p>
+                        <p class="text-xs text-green-600">+12</p>
+                    </div>
+                    <i data-lucide="bar-chart-3" class="w-8 h-8 text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="tw-card">
+            <div class="tw-card-content p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">目標達成率</p>
+                        <p class="text-2xl font-bold">75%</p>
+                        <p class="text-xs text-green-600">+3%</p>
+                    </div>
+                    <i data-lucide="target" class="w-8 h-8 text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- メインコンテンツ -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- クイックアクション -->
+            <div class="tw-card">
+                <div class="tw-card-header">
+                    <h2 class="tw-card-title">クイックアクション</h2>
+                </div>
+                <div class="tw-card-content">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <a href="{% url 'notebook_create' %}" class="tw-btn-outline h-20 flex-col">
+                            <i data-lucide="plus" class="w-6 h-6 mb-2"></i>
+                            新規ノート
+                        </a>
+                        <button class="tw-btn-outline h-20 flex-col">
+                            <i data-lucide="calculator" class="w-6 h-6 mb-2"></i>
+                            計算ツール
+                        </button>
+                        <button class="tw-btn-outline h-20 flex-col">
+                            <i data-lucide="trending-up" class="w-6 h-6 mb-2"></i>
+                            株価チェック
+                        </button>
+                        <button class="tw-btn-outline h-20 flex-col">
+                            <i data-lucide="users" class="w-6 h-6 mb-2"></i>
+                            コミュニティ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 最近のノート -->
+            {% if user.is_authenticated %}
+            <div class="tw-card">
+                <div class="tw-card-header">
+                    <h2 class="tw-card-title">最近の記録</h2>
+                </div>
+                <div class="tw-card-content">
+                    {% if recent_notebooks %}
+                        <div class="space-y-4">
+                            {% for notebook in recent_notebooks %}
+                            <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer">
+                                <a href="{% url 'notebook_detail' notebook.pk %}" class="block">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-lg">{{ notebook.title }}</h3>
+                                            <p class="text-gray-600 text-sm">{{ notebook.subtitle }}</p>
+                                            <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                                {% if notebook.current_price %}
+                                                    <span>現在価格: ¥{{ notebook.current_price|floatformat:0 }}</span>
+                                                {% endif %}
+                                                {% if notebook.target_price %}
+                                                    <span>目標価格: ¥{{ notebook.target_price|floatformat:0 }}</span>
+                                                {% endif %}
+                                                <span>{{ notebook.entry_count }}件の記録</span>
+                                            </div>
+                                            <div class="flex flex-wrap gap-1 mt-2">
+                                                {% for tag in notebook.tags.all %}
+                                                    <span class="tw-badge-secondary text-xs">#{{ tag.name }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-gray-500">{{ notebook.updated_at|timesince }}前</span>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-4">
+                            <a href="{% url 'notebook_list' %}" class="tw-btn-outline w-full">
+                                すべてのノートを見る
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8 text-gray-500">
+                            <i data-lucide="book-open" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                            <p>まだノートがありません</p>
+                            <p class="text-sm">最初のノートを作成して分析を始めましょう</p>
+                            <a href="{% url 'notebook_create' %}" class="tw-btn-primary mt-4">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                最初のノートを作成
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- サイドバー -->
+        <div class="space-y-6">
+            <!-- 市場データ -->
+            <div class="tw-card">
+                <div class="tw-card-header">
+                    <h2 class="tw-card-title">市場サマリー</h2>
+                </div>
+                <div class="tw-card-content">
+                    <div class="space-y-3">
+                        {% for item in market_data %}
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">{{ item.name }}</span>
+                            <div class="text-right">
+                                <div class="font-semibold">{{ item.value }}</div>
+                                <div class="text-sm {% if '+' in item.change %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ item.change }} ({{ item.change_percent }})
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人気タグ -->
+            <div class="tw-card">
+                <div class="tw-card-header">
+                    <h2 class="tw-card-title">人気タグ</h2>
+                </div>
+                <div class="tw-card-content">
+                    <div class="flex flex-wrap gap-2">
+                        {% for tag in popular_tags %}
+                            <span class="tw-badge-outline" onclick="setSearchQuery('#{{ tag.name }}')">
+                                #{{ tag.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- コミュニティ活動 -->
+            <div class="tw-card">
+                <div class="tw-card-header">
+                    <h2 class="tw-card-title">コミュニティ</h2>
+                </div>
+                <div class="tw-card-content">
+                    <div class="space-y-3">
+                        <div class="text-sm">
+                            <div class="font-medium">話題の銘柄</div>
+                            <div class="text-gray-600">トヨタ自動車の決算分析が注目されています</div>
+                        </div>
+                        <div class="text-sm">
+                            <div class="font-medium">人気の投稿</div>
+                            <div class="text-gray-600">高配当株の選び方について</div>
+                        </div>
+                        <button class="tw-btn-outline w-full tw-btn-sm">
+                            コミュニティを見る
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setSearchQuery(tag) {
+        const searchInput = document.getElementById('inline-search');
+        if (searchInput) {
+            searchInput.value = tag;
+            searchInput.focus();
+            searchInput.dispatchEvent(new Event('input'));
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,183 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}株式分析記録アプリ{% endblock %}</title>
+    
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- カスタムCSS -->
+    <style>
+        /* カスタムクラス定義 */
+        .tw-card {
+            @apply rounded-lg border bg-white shadow-sm;
+        }
+        .tw-card-header {
+            @apply flex flex-col space-y-1.5 p-6;
+        }
+        .tw-card-title {
+            @apply text-2xl font-semibold leading-none tracking-tight;
+        }
+        .tw-card-content {
+            @apply p-6 pt-0;
+        }
+        .tw-btn {
+            @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50;
+        }
+        .tw-btn-primary {
+            @apply tw-btn bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2;
+        }
+        .tw-btn-outline {
+            @apply tw-btn border border-gray-300 bg-white hover:bg-gray-50 h-10 px-4 py-2;
+        }
+        .tw-btn-ghost {
+            @apply tw-btn hover:bg-gray-100 h-10 px-4 py-2;
+        }
+        .tw-btn-sm {
+            @apply h-9 rounded-md px-3;
+        }
+        .tw-input {
+            @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+        }
+        .tw-textarea {
+            @apply flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+        }
+        .tw-select {
+            @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+        }
+        .tw-badge {
+            @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors;
+        }
+        .tw-badge-default {
+            @apply tw-badge bg-blue-600 text-white;
+        }
+        .tw-badge-secondary {
+            @apply tw-badge bg-gray-100 text-gray-900;
+        }
+        .tw-badge-outline {
+            @apply tw-badge border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer;
+        }
+    </style>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- ナビゲーション -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'dashboard' %}" class="text-xl font-bold text-gray-900">
+                        📊 株式分析記録
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'notebook_list' %}" class="text-gray-600 hover:text-gray-900">ノート一覧</a>
+                        <a href="{% url 'notebook_create' %}" class="tw-btn-primary">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            新規ノート
+                        </a>
+                        <span class="text-gray-600">{{ user.username }}</span>
+                    {% else %}
+                        <a href="/admin/" class="tw-btn-outline">ログイン</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- メッセージ表示 -->
+    {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 mt-4">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} rounded-lg p-4 mb-4
+                    {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800
+                    {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800
+                    {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800
+                    {% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- メインコンテンツ -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        // Lucide icons の初期化
+        lucide.createIcons();
+        
+        // インライン検索機能
+        function setupInlineSearch() {
+            const searchInput = document.getElementById('inline-search');
+            const searchResults = document.getElementById('search-results');
+            let searchTimeout;
+
+            if (searchInput && searchResults) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    const query = this.value.trim();
+                    
+                    if (query.length < 2) {
+                        searchResults.classList.add('hidden');
+                        return;
+                    }
+                    
+                    searchTimeout = setTimeout(() => {
+                        fetch(`/api/search/?q=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                displaySearchResults(data.results);
+                            })
+                            .catch(error => {
+                                console.error('検索エラー:', error);
+                            });
+                    }, 300);
+                });
+                
+                // 外部クリックで検索結果を閉じる
+                document.addEventListener('click', function(e) {
+                    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                        searchResults.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        function displaySearchResults(results) {
+            const searchResults = document.getElementById('search-results');
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="p-4 text-center text-gray-500">検索結果がありません</div>';
+            } else {
+                searchResults.innerHTML = results.map(result => `
+                    <a href="${result.url}" class="block p-3 hover:bg-gray-50 border-b last:border-b-0">
+                        <div class="font-semibold">${result.title}</div>
+                        <div class="text-sm text-gray-600">${result.subtitle}</div>
+                        <div class="flex gap-1 mt-1">
+                            ${result.tags.slice(0, 3).map(tag => 
+                                `<span class="tw-badge-outline text-xs">#${tag}</span>`
+                            ).join('')}
+                        </div>
+                    </a>
+                `).join('');
+            }
+            
+            searchResults.classList.remove('hidden');
+        }
+
+        // DOMロード後に実行
+        document.addEventListener('DOMContentLoaded', function() {
+            setupInlineSearch();
+        });
+    </script>
+</body>
+</html>

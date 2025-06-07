@@ -1,0 +1,9 @@
+<!-- templates/notebooks/partials/tag_list.html -->
+<div class="flex flex-wrap gap-1">
+    {% for tag in tags %}
+        <span class="tw-badge-outline text-xs">#{{ tag.name }}</span>
+    {% endfor %}
+    {% if remaining_count > 0 %}
+        <span class="tw-badge-secondary text-xs">+{{ remaining_count }}</span>
+    {% endif %}
+</div>

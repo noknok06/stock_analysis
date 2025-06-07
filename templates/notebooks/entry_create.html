@@ -1,0 +1,109 @@
+# templates/notebooks/entry_create.html
+{% extends 'base.html' %}
+
+{% block title %}エントリー作成 - {{ notebook.title }} - 株式分析記録アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto p-4 space-y-6">
+    <!-- ヘッダー -->
+    <div class="flex items-center gap-4">
+        <a href="{% url 'notebook_detail' notebook.pk %}" class="tw-btn-outline tw-btn-sm">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            戻る
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold">新規エントリー作成</h1>
+            <p class="text-gray-600">{{ notebook.title }}</p>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- エントリー情報 -->
+        <div class="tw-card">
+            <div class="tw-card-header">
+                <h2 class="tw-card-title">エントリー情報</h2>
+            </div>
+            <div class="tw-card-content space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">エントリータイプ</label>
+                    {{ form.entry_type }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
+                    {{ form.title }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">内容</label>
+                    {{ form.content }}
+                </div>
+            </div>
+        </div>
+
+        <!-- タグ -->
+        <div class="tw-card">
+            <div class="tw-card-header">
+                <h2 class="tw-card-title flex items-center gap-2">
+                    <i data-lucide="tag" class="w-5 h-5"></i>
+                    タグ
+                </h2>
+            </div>
+            <div class="tw-card-content space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">タグ</label>
+                    {{ form.tags }}
+                </div>
+
+                <!-- おすすめタグ -->
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2">おすすめタグ</label>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('決算分析')">
+                            #決算分析
+                        </span>
+                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('業績好調')">
+                            #業績好調
+                        </span>
+                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('テクニカル')">
+                            #テクニカル
+                        </span>
+                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('ファンダメンタル')">
+                            #ファンダメンタル
+                        </span>
+                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('配当計算')">
+                            #配当計算
+                        </span>
+                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('リスク分析')">
+                            #リスク分析
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 保存ボタン -->
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'notebook_detail' notebook.pk %}" class="tw-btn-outline">
+                キャンセル
+            </a>
+            <button type="submit" class="tw-btn-primary">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                保存
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function addSuggestedTag(tag) {
+        const tagsInput = document.getElementById('id_tags');
+        const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+        
+        if (!currentTags.includes(tag)) {
+            currentTags.push(tag);
+            tagsInput.value = currentTags.join(', ');
+        }
+    }
+</script>
+{% endblock %}

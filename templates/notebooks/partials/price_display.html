@@ -1,0 +1,162 @@
+<!-- templates/notebooks/partials/price_display.html -->
+<div class="grid grid-cols-2 gap-2 text-sm">
+    {% if notebook.current_price %}
+        <div>
+            <span class="text-gray-600">現在価格:</span>
+            <span class="font-semibold ml-1">{{ notebook.current_price|format_currency }}</span>
+        </div>
+    {% endif %}
+    {% if notebook.target_price %}
+        <div>
+            <span class="text-gray-600">目標価格:</span>
+            <span class="font-semibold ml-1 {% price_change_class notebook.current_price notebook.target_price %}">
+                {{ notebook.target_price|format_currency }}
+            </span>
+        </div>
+    {% endif %}
+    {% if notebook.current_price and notebook.target_price %}
+        <div class="col-span-2">
+            <span class="text-gray-600">目標まで:</span>
+            <span class="font-semibold ml-1 {% price_change_class notebook.current_price notebook.target_price %}">
+                {{ notebook.price_change_percent|format_percent }}
+            </span>
+        </div>
+    {% endif %}
+</div>
+
+<!-- AI分析機能のJavaScript -->
+<script>
+// AI分析実行
+async function analyzeContent(content, title = '') {
+    if (!content || content.length < 10) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/ai/analyze/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                content: content,
+                title: title
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayAIAnalysis(data.analysis);
+        }
+    } catch (error) {
+        console.error('AI分析エラー:', error);
+    }
+}
+
+// AI分析結果表示
+function displayAIAnalysis(analysis) {
+    const card = document.getElementById('ai-analysis-card');
+    if (!card) return;
+    
+    // 基本情報更新
+    document.getElementById('ai-confidence').textContent = `信頼度: ${Math.round(analysis.confidence * 100)}%`;
+    document.getElementById('ai-sentiment').textContent = getSentimentLabel(analysis.sentiment);
+    document.getElementById('ai-sentiment').className = `ml-2 font-medium ${getSentimentColor(analysis.sentiment)}`;
+    document.getElementById('ai-stocks').textContent = `${analysis.stock_mentions.length}件`;
+    document.getElementById('ai-tags-count').textContent = `${analysis.suggested_tags.length}件`;
+    
+    // 推奨タグ表示
+    const tagsList = document.getElementById('ai-tags-list');
+    tagsList.innerHTML = analysis.suggested_tags.map(tag => 
+        `<span class="tw-badge-outline cursor-pointer hover:bg-blue-100" onclick="addTagToForm('${tag}')">${tag}</span>`
+    ).join('');
+    
+    // インサイト表示
+    const insightsList = document.getElementById('ai-insights-list');
+    if (analysis.investment_insights.length > 0) {
+        insightsList.innerHTML = analysis.investment_insights.map(insight => 
+            `<div class="flex items-start gap-2">
+                <i data-lucide="lightbulb" class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0"></i>
+                <span>${insight}</span>
+            </div>`
+        ).join('');
+    } else {
+        insightsList.innerHTML = '<span class="text-gray-500">特筆すべきインサイトはありません</span>';
+    }
+    
+    // 分析スコア表示
+    const scoreBar = document.getElementById('analysis-score-bar');
+    const scoreText = document.getElementById('analysis-score-text');
+    scoreBar.style.width = `${analysis.analysis_score}%`;
+    scoreText.textContent = analysis.analysis_score;
+    
+    // カード表示
+    card.style.display = 'block';
+    
+    // アイコン再初期化
+    lucide.createIcons();
+}
+
+// センチメントラベル取得
+function getSentimentLabel(sentiment) {
+    switch (sentiment) {
+        case 'positive': return 'ポジティブ';
+        case 'negative': return 'ネガティブ';
+        default: return 'ニュートラル';
+    }
+}
+
+// センチメント色取得
+function getSentimentColor(sentiment) {
+    switch (sentiment) {
+        case 'positive': return 'text-green-600';
+        case 'negative': return 'text-red-600';
+        default: return 'text-gray-600';
+    }
+}
+
+// タグをフォームに追加
+function addTagToForm(tag) {
+    const tagsInput = document.getElementById('id_tags');
+    if (!tagsInput) return;
+    
+    const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+    
+    if (!currentTags.includes(tag)) {
+        currentTags.push(tag);
+        tagsInput.value = currentTags.join(', ');
+        
+        // 視覚的フィードバック
+        const tagElement = event.target;
+        tagElement.classList.add('bg-blue-200');
+        setTimeout(() => {
+            tagElement.classList.remove('bg-blue-200');
+        }, 500);
+    }
+}
+
+// コンテンツ変更時のAI分析
+function setupAIAnalysis() {
+    const contentField = document.getElementById('id_content');
+    const titleField = document.getElementById('id_title');
+    
+    if (contentField) {
+        let analysisTimeout;
+        
+        contentField.addEventListener('input', function() {
+            clearTimeout(analysisTimeout);
+            analysisTimeout = setTimeout(() => {
+                const title = titleField ? titleField.value : '';
+                analyzeContent(this.value, title);
+            }, 1000); // 1秒後に分析実行
+        });
+    }
+}
+
+// DOMロード後に実行
+document.addEventListener('DOMContentLoaded', function() {
+    setupAIAnalysis();
+});
+</script>

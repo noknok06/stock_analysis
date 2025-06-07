@@ -1,0 +1,56 @@
+<!-- templates/notebooks/partials/ai_analysis.html -->
+<div class="tw-card border-blue-200 bg-blue-50" id="ai-analysis-card" style="display: none;">
+    <div class="tw-card-header">
+        <h3 class="tw-card-title flex items-center gap-2 text-blue-900">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+            AI分析結果
+            <span class="tw-badge-secondary ml-auto" id="ai-confidence">信頼度: -</span>
+        </h3>
+    </div>
+    <div class="tw-card-content">
+        <div class="space-y-4">
+            <!-- センチメント分析 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                    <span class="text-gray-600">センチメント:</span>
+                    <span class="ml-2 font-medium" id="ai-sentiment">-</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">検出銘柄:</span>
+                    <span class="ml-2 font-medium" id="ai-stocks">-</span>
+                </div>
+                <div>
+                    <span class="text-gray-600">推奨タグ:</span>
+                    <span class="ml-2 font-medium" id="ai-tags-count">-</span>
+                </div>
+            </div>
+
+            <!-- 推奨タグ -->
+            <div id="ai-suggested-tags">
+                <div class="text-sm font-medium text-gray-700 mb-2">AI推奨タグ</div>
+                <div class="flex flex-wrap gap-2" id="ai-tags-list">
+                    <!-- タグがここに動的に追加される -->
+                </div>
+            </div>
+
+            <!-- インサイト -->
+            <div id="ai-insights">
+                <div class="text-sm font-medium text-gray-700 mb-2">投資判断インサイト</div>
+                <div class="text-sm text-gray-600 bg-white p-3 rounded-lg" id="ai-insights-list">
+                    <!-- インサイトがここに動的に追加される -->
+                </div>
+            </div>
+
+            <!-- 分析スコア -->
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">分析スコア:</span>
+                <div class="flex items-center gap-2">
+                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full" id="analysis-score-bar" style="width: 0%"></div>
+                    </div>
+                    <span class="font-medium" id="analysis-score-text">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

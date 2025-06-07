@@ -1,0 +1,141 @@
+# templates/notebooks/list.html
+{% extends 'base.html' %}
+
+{% block title %}ノート一覧 - 株式分析記録アプリ{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 space-y-6">
+    <!-- ヘッダー -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">ノート一覧</h1>
+            <p class="text-gray-600">あなたの投資分析ノート</p>
+        </div>
+        <a href="{% url 'notebook_create' %}" class="tw-btn-primary">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            新規ノート
+        </a>
+    </div>
+
+    <!-- 検索バー -->
+    <div class="tw-card">
+        <div class="tw-card-content p-4">
+            <form method="get" class="flex gap-4">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                    <input 
+                        type="text" 
+                        name="search"
+                        value="{{ search_query }}"
+                        placeholder="銘柄名、企業名、タグで検索..." 
+                        class="tw-input pl-10"
+                    />
+                </div>
+                <button type="submit" class="tw-btn-primary">検索</button>
+                {% if search_query %}
+                    <a href="{% url 'notebook_list' %}" class="tw-btn-outline">クリア</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- ノート一覧 -->
+    {% if page_obj.object_list %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for notebook in page_obj.object_list %}
+            <div class="tw-card hover:shadow-lg transition-shadow">
+                <div class="tw-card-content p-6">
+                    <a href="{% url 'notebook_detail' notebook.pk %}" class="block">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-lg mb-1">{{ notebook.title }}</h3>
+                                <p class="text-gray-600 text-sm">{{ notebook.subtitle }}</p>
+                            </div>
+                            <span class="text-xs text-gray-500">{{ notebook.updated_at|timesince }}前</span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            {% if notebook.current_price and notebook.target_price %}
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">現在価格:</span>
+                                    <span class="font-semibold">¥{{ notebook.current_price|floatformat:0 }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">目標価格:</span>
+                                    <span class="font-semibold text-green-600">¥{{ notebook.target_price|floatformat:0 }}</span>
+                                </div>
+                                {% if notebook.price_change_percent %}
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-600">目標まで:</span>
+                                        <span class="font-semibold {% if notebook.price_change_percent > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ notebook.price_change_percent|floatformat:1 }}%
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">記録数:</span>
+                                <span class="font-semibold">{{ notebook.entry_count }}件</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-1">
+                            {% for tag in notebook.tags.all %}
+                                <span class="tw-badge-outline text-xs">#{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </a>
+                    
+                    <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
+                        <a href="{% url 'notebook_edit' notebook.pk %}" class="tw-btn-ghost tw-btn-sm">
+                            <i data-lucide="edit" class="w-4 h-4"></i>
+                        </a>
+                        <a href="{% url 'entry_create' notebook.pk %}" class="tw-btn-ghost tw-btn-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ページネーション -->
+        {% if page_obj.has_other_pages %}
+            <div class="flex justify-center mt-8">
+                <nav class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">最初</a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">前へ</a>
+                    {% endif %}
+                    
+                    <span class="px-4 py-2 text-sm">
+                        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">次へ</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="tw-btn-outline tw-btn-sm">最後</a>
+                    {% endif %}
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-12">
+            {% if search_query %}
+                <i data-lucide="search" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">検索結果がありません</h3>
+                <p class="text-gray-600 mb-4">「{{ search_query }}」に一致するノートが見つかりませんでした</p>
+                <a href="{% url 'notebook_list' %}" class="tw-btn-outline">すべてのノートを表示</a>
+            {% else %}
+                <i data-lucide="book-open" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">ノートがありません</h3>
+                <p class="text-gray-600 mb-4">最初のノートを作成して投資分析を始めましょう</p>
+                <a href="{% url 'notebook_create' %}" class="tw-btn-primary">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    最初のノートを作成
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
