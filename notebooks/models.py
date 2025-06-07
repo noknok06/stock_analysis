@@ -1,13 +1,12 @@
-# notebooks/models.py
+# notebooks/models.py (AutoField版)
 from django.db import models
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
-import uuid
 
 
 class Notebook(models.Model):
     """ノートブック（銘柄分析ノート）"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # AutoFieldを使用（SQLite互換性向上）
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200, verbose_name="タイトル")
     subtitle = models.CharField(max_length=300, blank=True, verbose_name="サブタイトル")
@@ -16,8 +15,9 @@ class Notebook(models.Model):
     
     # 投資目標
     investment_goal = models.TextField(blank=True, verbose_name="投資理由・戦略")
-    current_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="現在価格")
-    target_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="目標価格")
+    # FloatFieldを使用してSQLite互換性を向上
+    current_price = models.FloatField(null=True, blank=True, verbose_name="現在価格")
+    target_price = models.FloatField(null=True, blank=True, verbose_name="目標価格")
     risk_factors = models.TextField(blank=True, verbose_name="リスク要因")
     
     # AI分析結果
@@ -51,7 +51,7 @@ class Notebook(models.Model):
     def price_change_percent(self):
         """目標価格との差分パーセント"""
         if self.current_price and self.target_price:
-            return ((self.target_price - self.current_price) / self.current_price) * 100
+            return float((self.target_price - self.current_price) / self.current_price * 100)
         return 0
     
     def update_ai_analysis(self, analysis_data):
@@ -91,7 +91,7 @@ class Entry(models.Model):
         ('memo', 'メモ'),
     ]
     
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # AutoFieldを使用（SQLite互換性向上）
     notebook = models.ForeignKey(Notebook, on_delete=models.CASCADE, related_name='entries')
     entry_type = models.CharField(max_length=20, choices=ENTRY_TYPES, default='memo', verbose_name="エントリータイプ")
     title = models.CharField(max_length=200, blank=True, verbose_name="タイトル")

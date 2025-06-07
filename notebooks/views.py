@@ -1,4 +1,4 @@
-# notebooks/views.py（AI機能統合版）
+# notebooks/views.py（AI機能エラーハンドリング版）
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -15,10 +15,19 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .ai_analyzer import StockAnalysisAI
 from .calculators import InvestmentCalculator
-from .semantic_search import SemanticSearchEngine
 from .utils import get_market_data_cache
+
+# AI機能のインポート（エラーハンドリング付き）
+AI_AVAILABLE = False
+try:
+    from .ai_analyzer import StockAnalysisAI
+    from .semantic_search import SemanticSearchEngine
+    AI_AVAILABLE = True
+    print("AI機能が正常に読み込まれました")
+except ImportError as e:
+    print(f"AI機能が利用できません: {e}")
+    print("基本機能のみで動作します")
 
 
 def dashboard_view(request):
@@ -64,6 +73,7 @@ def dashboard_view(request):
         'recent_notebooks': recent_notebooks,
         'market_data': market_data,
         'popular_tags': popular_tags,
+        'ai_available': AI_AVAILABLE,
     }
     return render(request, 'notebooks/dashboard.html', context)
 
@@ -104,8 +114,13 @@ def notebook_create_view(request):
             try:
                 notebook = form.save(user=request.user)
                 
-                # AI分析の実行（バックグラウンド）
-                perform_ai_analysis_for_notebook(notebook)
+                # AI分析の実行（利用可能な場合のみ）
+                if AI_AVAILABLE:
+                    try:
+                        perform_ai_analysis_for_notebook(notebook)
+                    except Exception as e:
+                        print(f"AI分析エラー: {str(e)}")
+                        # AI分析失敗時もメッセージは表示しない
                 
                 messages.success(request, f'ノート「{notebook.title}」を作成しました。')
                 return redirect('notebook_detail', pk=notebook.pk)
@@ -125,6 +140,7 @@ def notebook_create_view(request):
     context = {
         'form': form,
         'suggested_tags': suggested_tags,
+        'ai_available': AI_AVAILABLE,
     }
     return render(request, 'notebooks/create.html', context)
 
@@ -143,6 +159,7 @@ def notebook_detail_view(request, pk):
     context = {
         'notebook': notebook,
         'entries_page': entries_page,
+        'ai_available': AI_AVAILABLE,
     }
     return render(request, 'notebooks/detail.html', context)
 
@@ -158,8 +175,12 @@ def notebook_edit_view(request, pk):
             try:
                 notebook = form.save()
                 
-                # AI分析の再実行
-                perform_ai_analysis_for_notebook(notebook)
+                # AI分析の再実行（利用可能な場合のみ）
+                if AI_AVAILABLE:
+                    try:
+                        perform_ai_analysis_for_notebook(notebook)
+                    except Exception as e:
+                        print(f"AI分析エラー: {str(e)}")
                 
                 messages.success(request, f'ノート「{notebook.title}」を更新しました。')
                 return redirect('notebook_detail', pk=notebook.pk)
@@ -189,15 +210,23 @@ def entry_create_view(request, notebook_pk):
                 entry.save()
                 form.save_m2m()
                 
-                # AI分析の実行
-                perform_ai_analysis_for_entry(entry)
+                # AI分析の実行（利用可能な場合のみ）
+                if AI_AVAILABLE:
+                    try:
+                        perform_ai_analysis_for_entry(entry)
+                    except Exception as e:
+                        print(f"AI分析エラー: {str(e)}")
                 
                 # ノートのエントリー数更新
                 notebook.entry_count = notebook.entries.count()
                 notebook.save()
                 
-                # ノート全体のAI分析も更新
-                perform_ai_analysis_for_notebook(notebook)
+                # ノート全体のAI分析も更新（利用可能な場合のみ）
+                if AI_AVAILABLE:
+                    try:
+                        perform_ai_analysis_for_notebook(notebook)
+                    except Exception as e:
+                        print(f"AI分析エラー: {str(e)}")
                 
                 messages.success(request, 'エントリーを作成しました。')
                 return redirect('notebook_detail', pk=notebook.pk)
@@ -209,6 +238,7 @@ def entry_create_view(request, notebook_pk):
     context = {
         'form': form,
         'notebook': notebook,
+        'ai_available': AI_AVAILABLE,
     }
     return render(request, 'notebooks/entry_create.html', context)
 
@@ -291,9 +321,12 @@ class CustomLogoutView(auth_views.LogoutView):
         return super().dispatch(request, *args, **kwargs)
 
 
-# AI分析機能
+# AI分析機能（利用可能な場合のみ）
 def perform_ai_analysis_for_notebook(notebook):
     """ノートブック全体のAI分析実行"""
+    if not AI_AVAILABLE:
+        return
+    
     try:
         search_engine = SemanticSearchEngine()
         full_text = search_engine._extract_full_text(notebook)
@@ -315,12 +348,14 @@ def perform_ai_analysis_for_notebook(notebook):
                 notebook.tags.add(*new_tags)
     
     except Exception as e:
-        # ログ出力（本番環境では適切なロギング設定が必要）
         print(f"AI分析エラー (ノートブック {notebook.pk}): {str(e)}")
 
 
 def perform_ai_analysis_for_entry(entry):
     """エントリーのAI分析実行"""
+    if not AI_AVAILABLE:
+        return
+    
     try:
         if len(entry.content.strip()) > 10:  # 最小文字数チェック
             analyzer = StockAnalysisAI()
@@ -339,13 +374,16 @@ def perform_ai_analysis_for_entry(entry):
                 entry.tags.add(*new_tags)
     
     except Exception as e:
-        # ログ出力（本番環境では適切なロギング設定が必要）
         print(f"AI分析エラー (エントリー {entry.pk}): {str(e)}")
 
 
 # AI機能のバッチ処理（管理コマンド用）
 def batch_ai_analysis_for_user(user_id, force_update=False):
     """ユーザーの全ノートブックにAI分析を実行"""
+    if not AI_AVAILABLE:
+        print("AI機能が利用できないため、バッチ処理をスキップします")
+        return False
+    
     try:
         user_notebooks = Notebook.objects.filter(user_id=user_id)
         
