@@ -1,4 +1,4 @@
-<!-- templates/base.html -->
+<!-- templates/base.html (改良版) -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -9,111 +9,342 @@
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- カスタムCSS -->
+    <!-- カスタムCSS（BEM規約準拠・アクセシビリティ重視） -->
     <style>
-        /* カスタムクラス定義 */
-        .tw-card {
-            @apply rounded-lg border bg-white shadow-sm;
+        /* ベースコンポーネント（BEM準拠） */
+        .app-card {
+            @apply rounded-lg border bg-white shadow-sm transition-shadow duration-200;
         }
-        .tw-card-header {
-            @apply flex flex-col space-y-1.5 p-6;
+        .app-card:hover {
+            @apply shadow-md;
         }
-        .tw-card-title {
-            @apply text-2xl font-semibold leading-none tracking-tight;
+        .app-card__header {
+            @apply flex flex-col space-y-1.5 p-4 md:p-6;
         }
-        .tw-card-content {
-            @apply p-6 pt-0;
+        .app-card__title {
+            @apply text-lg md:text-xl font-semibold leading-none tracking-tight;
         }
-        .tw-btn {
-            @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50;
+        .app-card__content {
+            @apply p-4 md:p-6 pt-0;
         }
-        .tw-btn-primary {
-            @apply tw-btn bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2;
+        
+        /* ボタンコンポーネント */
+        .app-btn {
+            @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 touch-manipulation;
         }
-        .tw-btn-outline {
-            @apply tw-btn border border-gray-300 bg-white hover:bg-gray-50 h-10 px-4 py-2;
+        .app-btn--primary {
+            @apply app-btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 h-9 md:h-10 px-3 md:px-4 py-2;
         }
-        .tw-btn-ghost {
-            @apply tw-btn hover:bg-gray-100 h-10 px-4 py-2;
+        .app-btn--secondary {
+            @apply app-btn border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 h-9 md:h-10 px-3 md:px-4 py-2;
         }
-        .tw-btn-sm {
-            @apply h-9 rounded-md px-3;
+        .app-btn--ghost {
+            @apply app-btn hover:bg-gray-100 active:bg-gray-200 h-9 md:h-10 px-3 md:px-4 py-2;
         }
-        .tw-input {
-            @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+        .app-btn--sm {
+            @apply h-8 rounded-md px-2 md:px-3 text-xs md:text-sm;
         }
-        .tw-textarea {
-            @apply flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+        .app-btn--lg {
+            @apply h-12 md:h-14 px-6 md:px-8 text-base md:text-lg;
         }
-        .tw-select {
-            @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+        
+        /* フォームコンポーネント */
+        .app-input {
+            @apply flex h-10 md:h-12 w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
         }
-        .tw-badge {
-            @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors;
+        .app-textarea {
+            @apply flex min-h-[80px] md:min-h-[100px] w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-vertical;
         }
-        .tw-badge-default {
-            @apply tw-badge bg-blue-600 text-white;
+        .app-select {
+            @apply flex h-10 md:h-12 w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
         }
-        .tw-badge-secondary {
-            @apply tw-badge bg-gray-100 text-gray-900;
+        
+        /* バッジコンポーネント */
+        .app-badge {
+            @apply inline-flex items-center rounded-full px-2 md:px-2.5 py-0.5 md:py-1 text-xs md:text-sm font-semibold transition-colors;
         }
-        .tw-badge-outline {
-            @apply tw-badge border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer;
+        .app-badge--primary {
+            @apply app-badge bg-blue-600 text-white;
+        }
+        .app-badge--secondary {
+            @apply app-badge bg-gray-100 text-gray-900;
+        }
+        .app-badge--outline {
+            @apply app-badge border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer;
+        }
+        
+        /* モバイルメニュー */
+        .mobile-menu {
+            @apply fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300;
+        }
+        .mobile-menu__panel {
+            @apply fixed right-0 top-0 h-full w-80 max-w-[90vw] bg-white shadow-xl transform transition-transform duration-300 ease-out;
+        }
+        .mobile-menu--hidden {
+            @apply opacity-0 pointer-events-none;
+        }
+        .mobile-menu--hidden .mobile-menu__panel {
+            @apply translate-x-full;
+        }
+        
+        /* レスポンシブ調整 */
+        @media (max-width: 640px) {
+            .touch-friendly {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+        
+        /* ダークモード対応 */
+        @media (prefers-color-scheme: dark) {
+            .app-card {
+                @apply bg-gray-800 border-gray-700 text-white;
+            }
         }
     </style>
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
-<body class="min-h-screen bg-gray-50">
-    <!-- ナビゲーション -->
-    <nav class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <a href="{% url 'dashboard' %}" class="text-xl font-bold text-gray-900">
-                        📊 株式分析記録
+<body class="min-h-screen bg-gray-50 antialiased">
+    <!-- ナビゲーションヘッダー -->
+    <nav class="app-navigation bg-white border-b border-gray-200 sticky top-0 z-40" role="navigation" aria-label="メインナビゲーション">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-14 md:h-16">
+                <!-- ロゴ・ホームリンク -->
+                <div class="app-navigation__brand flex items-center">
+                    <a href="{% url 'dashboard' %}" class="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 touch-friendly">
+                        <span role="img" aria-label="チャートアイコン">📊</span>
+                        <span class="hidden xs:inline">株式分析記録</span>
+                        <span class="xs:hidden">株式分析</span>
                     </a>
                 </div>
-                <div class="flex items-center space-x-4">
+                
+                <!-- デスクトップナビゲーション -->
+                <div class="app-navigation__desktop hidden md:flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'notebook_list' %}" class="text-gray-600 hover:text-gray-900">ノート一覧</a>
-                        <a href="{% url 'notebook_create' %}" class="tw-btn-primary">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                            新規ノート
+                        <a href="{% url 'notebook_list' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors" aria-current="{% if request.resolver_match.url_name == 'notebook_list' %}page{% endif %}">
+                            ノート一覧
                         </a>
-                        <span class="text-gray-600">{{ user.username }}</span>
+                        <a href="{% url 'calculator' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors" aria-current="{% if request.resolver_match.url_name == 'calculator' %}page{% endif %}">
+                            計算ツール
+                        </a>
+                        <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary">
+                            <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                            <span class="hidden sm:inline">新規ノート</span>
+                            <span class="sm:hidden">新規</span>
+                        </a>
+                        <div class="app-navigation__user flex items-center gap-2">
+                            <span class="text-sm text-gray-600 hidden lg:inline">{{ user.username }}</span>
+                            <a href="{% url 'logout' %}" class="text-gray-400 hover:text-gray-600 p-1" aria-label="ログアウト">
+                                <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
+                            </a>
+                        </div>
                     {% else %}
-                        <a href="/admin/" class="tw-btn-outline">ログイン</a>
+                        <a href="{% url 'login' %}" class="app-btn app-btn--secondary">ログイン</a>
+                        <a href="{% url 'register' %}" class="app-btn app-btn--primary">新規登録</a>
                     {% endif %}
+                </div>
+                
+                <!-- モバイルメニューボタン -->
+                <div class="app-navigation__mobile md:hidden">
+                    <button type="button" 
+                            class="app-btn app-btn--ghost p-2 touch-friendly" 
+                            aria-label="メニューを開く"
+                            aria-expanded="false"
+                            aria-controls="mobile-menu"
+                            onclick="toggleMobileMenu()">
+                        <i data-lucide="menu" class="w-6 h-6" aria-hidden="true"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- メッセージ表示 -->
+    <!-- モバイルメニュー -->
+    <div id="mobile-menu" class="mobile-menu mobile-menu--hidden" aria-hidden="true">
+        <div class="mobile-menu__panel">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold">メニュー</h2>
+                    <button type="button" 
+                            class="app-btn app-btn--ghost p-2 touch-friendly" 
+                            aria-label="メニューを閉じる"
+                            onclick="toggleMobileMenu()">
+                        <i data-lucide="x" class="w-6 h-6" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <nav class="p-4" role="navigation" aria-label="モバイルメニュー">
+                {% if user.is_authenticated %}
+                    <div class="space-y-2">
+                        <a href="{% url 'dashboard' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                            <i data-lucide="home" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
+                            ダッシュボード
+                        </a>
+                        <a href="{% url 'notebook_list' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                            <i data-lucide="book-open" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
+                            ノート一覧
+                        </a>
+                        <a href="{% url 'calculator' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                            <i data-lucide="calculator" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
+                            計算ツール
+                        </a>
+                        <a href="{% url 'notebook_create' %}" class="block px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors">
+                            <i data-lucide="plus" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
+                            新規ノート作成
+                        </a>
+                    </div>
+                    
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="px-4 py-2 text-sm text-gray-600">
+                            ログイン中: {{ user.username }}
+                        </div>
+                        <a href="{% url 'logout' %}" class="block px-4 py-3 text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                            <i data-lucide="log-out" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
+                            ログアウト
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="space-y-2">
+                        <a href="{% url 'login' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                            <i data-lucide="log-in" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
+                            ログイン
+                        </a>
+                        <a href="{% url 'register' %}" class="block px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors">
+                            <i data-lucide="user-plus" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
+                            新規登録
+                        </a>
+                    </div>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+
+    <!-- メッセージ表示（アクセシビリティ対応） -->
     {% if messages %}
-        <div class="max-w-7xl mx-auto px-4 mt-4">
+        <div class="app-messages max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4" role="alert" aria-live="polite">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} rounded-lg p-4 mb-4
+                <div class="app-message app-message--{{ message.tags }} rounded-lg p-4 mb-4 flex items-start gap-3
                     {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800
                     {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800
                     {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800
                     {% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
-                    {{ message }}
+                    
+                    <i data-lucide="{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}alert-circle{% elif message.tags == 'warning' %}alert-triangle{% else %}info{% endif %}" 
+                       class="w-5 h-5 mt-0.5 flex-shrink-0" aria-hidden="true"></i>
+                    
+                    <div class="flex-1">{{ message }}</div>
+                    
+                    <button type="button" 
+                            class="flex-shrink-0 p-1 hover:bg-black hover:bg-opacity-10 rounded transition-colors" 
+                            aria-label="メッセージを閉じる"
+                            onclick="this.parentElement.style.display='none'">
+                        <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 
     <!-- メインコンテンツ -->
-    <main>
+    <main role="main" class="app-main">
         {% block content %}{% endblock %}
     </main>
 
+    <!-- フッター -->
+    <footer class="app-footer bg-white border-t border-gray-200 mt-12" role="contentinfo">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center text-sm text-gray-600">
+                <p>&copy; 2024 株式分析記録アプリ. All rights reserved.</p>
+                <p class="mt-2">
+                    <a href="#" class="hover:text-gray-900 transition-colors">プライバシーポリシー</a>
+                    <span class="mx-2">|</span>
+                    <a href="#" class="hover:text-gray-900 transition-colors">利用規約</a>
+                    <span class="mx-2">|</span>
+                    <a href="#" class="hover:text-gray-900 transition-colors">お問い合わせ</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
     <script>
         // Lucide icons の初期化
         lucide.createIcons();
+        
+        // モバイルメニューの制御
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('[aria-controls="mobile-menu"]');
+            const isHidden = menu.classList.contains('mobile-menu--hidden');
+            
+            if (isHidden) {
+                menu.classList.remove('mobile-menu--hidden');
+                menu.setAttribute('aria-hidden', 'false');
+                button.setAttribute('aria-expanded', 'true');
+                button.setAttribute('aria-label', 'メニューを閉じる');
+                // フォーカストラップ
+                trapFocus(menu);
+                // スクロール防止
+                document.body.style.overflow = 'hidden';
+            } else {
+                menu.classList.add('mobile-menu--hidden');
+                menu.setAttribute('aria-hidden', 'true');
+                button.setAttribute('aria-expanded', 'false');
+                button.setAttribute('aria-label', 'メニューを開く');
+                // スクロール復元
+                document.body.style.overflow = '';
+                // フォーカスを戻す
+                button.focus();
+            }
+        }
+        
+        // フォーカストラップ（アクセシビリティ）
+        function trapFocus(element) {
+            const focusableElements = element.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+            
+            function handleTabKey(e) {
+                if (e.key !== 'Tab') return;
+                
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            }
+            
+            element.addEventListener('keydown', handleTabKey);
+            firstElement.focus();
+        }
+        
+        // ESCキーでモバイルメニューを閉じる
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const menu = document.getElementById('mobile-menu');
+                if (!menu.classList.contains('mobile-menu--hidden')) {
+                    toggleMobileMenu();
+                }
+            }
+        });
+        
+        // モバイルメニューの背景クリックで閉じる
+        document.getElementById('mobile-menu').addEventListener('click', function(e) {
+            if (e.target === this) {
+                toggleMobileMenu();
+            }
+        });
         
         // インライン検索機能
         function setupInlineSearch() {
@@ -143,10 +374,17 @@
                     }, 300);
                 });
                 
-                // 外部クリックで検索結果を閉じる
+                // 外部クリック・ESCキーで検索結果を閉じる
                 document.addEventListener('click', function(e) {
                     if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                         searchResults.classList.add('hidden');
+                    }
+                });
+                
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && !searchResults.classList.contains('hidden')) {
+                        searchResults.classList.add('hidden');
+                        searchInput.focus();
                     }
                 });
             }
@@ -159,12 +397,12 @@
                 searchResults.innerHTML = '<div class="p-4 text-center text-gray-500">検索結果がありません</div>';
             } else {
                 searchResults.innerHTML = results.map(result => `
-                    <a href="${result.url}" class="block p-3 hover:bg-gray-50 border-b last:border-b-0">
+                    <a href="${result.url}" class="block p-3 hover:bg-gray-50 border-b last:border-b-0 focus:bg-gray-50 focus:outline-none">
                         <div class="font-semibold">${result.title}</div>
                         <div class="text-sm text-gray-600">${result.subtitle}</div>
                         <div class="flex gap-1 mt-1">
                             ${result.tags.slice(0, 3).map(tag => 
-                                `<span class="tw-badge-outline text-xs">#${tag}</span>`
+                                `<span class="app-badge app-badge--outline text-xs">#${tag}</span>`
                             ).join('')}
                         </div>
                     </a>
@@ -178,6 +416,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             setupInlineSearch();
         });
+        
+        // パフォーマンス最適化：画像の遅延読み込み
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('img[data-src]').forEach(img => {
+                imageObserver.observe(img);
+            });
+        }
     </script>
 </body>
 </html>

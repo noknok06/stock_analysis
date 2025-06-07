@@ -1,210 +1,641 @@
-<!-- templates/notebooks/entry_create.html -->
+<!-- templates/notebooks/entry_create.html (改良版) -->
 {% extends 'base.html' %}
 
 {% block title %}エントリー作成 - {{ notebook.title }} - 株式分析記録アプリ{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto p-4 space-y-6">
-    <!-- ヘッダー -->
-    <div class="flex items-center gap-4">
-        <a href="{% url 'notebook_detail' notebook.pk %}" class="tw-btn-outline tw-btn-sm">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            戻る
-        </a>
-        <div>
-            <h1 class="text-2xl font-bold">新規エントリー作成</h1>
-            <p class="text-gray-600">{{ notebook.title }}</p>
-        </div>
-    </div>
-
-    <form method="post" class="space-y-6">
-        {% csrf_token %}
+<div class="entry-create max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+    <!-- ページヘッダー -->
+    <header class="entry-create__header mb-6">
+        <nav aria-label="パンくずリスト" class="mb-4">
+            <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                <li><a href="{% url 'dashboard' %}" class="hover:text-gray-700 transition-colors">ホーム</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i></li>
+                <li><a href="{% url 'notebook_detail' notebook.pk %}" class="hover:text-gray-700 transition-colors truncate max-w-32">{{ notebook.title }}</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i></li>
+                <li class="text-gray-900 font-medium">新規エントリー</li>
+            </ol>
+        </nav>
         
-        <!-- エントリー情報 -->
-        <div class="tw-card">
-            <div class="tw-card-header">
-                <h2 class="tw-card-title">エントリー情報</h2>
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div class="entry-create__header-content flex-1 min-w-0">
+                <h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">新規エントリー作成</h1>
+                <p class="text-sm md:text-base text-gray-600 mt-1 break-words">
+                    {{ notebook.title }} への記録追加
+                </p>
+                
+                <!-- ショートカットヒント -->
+                <div class="keyboard-shortcuts mt-2 text-xs text-gray-500 hidden md:block">
+                    <span class="inline-flex items-center gap-1">
+                        <kbd class="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl</kbd>
+                        <span>+</span>
+                        <kbd class="px-1 py-0.5 bg-gray-100 rounded text-xs">Enter</kbd>
+                        <span>で保存</span>
+                    </span>
+                    <span class="mx-2">|</span>
+                    <span class="inline-flex items-center gap-1">
+                        <kbd class="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl</kbd>
+                        <span>+</span>
+                        <kbd class="px-1 py-0.5 bg-gray-100 rounded text-xs">T</kbd>
+                        <span>でタグ入力</span>
+                    </span>
+                </div>
             </div>
-            <div class="tw-card-content space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">エントリータイプ</label>
-                    {{ form.entry_type }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
-                    {{ form.title }}
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">内容</label>
-                    {{ form.content }}
-                    <div class="text-xs text-gray-500 mt-1">
-                        20文字以上入力するとAIによるリアルタイム分析が開始されます
-                    </div>
-                </div>
+            
+            <div class="entry-create__header-actions flex items-center gap-2">
+                <button type="button" 
+                        class="app-btn app-btn--secondary app-btn--sm"
+                        onclick="togglePreviewMode()"
+                        aria-pressed="false"
+                        id="preview-toggle">
+                    <i data-lucide="eye" class="w-4 h-4" aria-hidden="true"></i>
+                    <span class="hidden sm:inline">プレビュー</span>
+                </button>
+                <button type="button" 
+                        class="app-btn app-btn--secondary app-btn--sm"
+                        onclick="openTemplateModal()"
+                        aria-label="テンプレートを使用">
+                    <i data-lucide="layout-template" class="w-4 h-4" aria-hidden="true"></i>
+                    <span class="hidden sm:inline">テンプレート</span>
+                </button>
             </div>
         </div>
+    </header>
 
-        <!-- AI分析支援 -->
-        <div class="tw-card border-blue-200 bg-blue-50" id="ai-analysis-panel" style="display: none;">
-            <div class="tw-card-header">
-                <h2 class="tw-card-title flex items-center gap-2 text-blue-900">
-                    <i data-lucide="sparkles" class="w-5 h-5"></i>
-                    リアルタイムAI分析
-                </h2>
-            </div>
-            <div class="tw-card-content space-y-4">
-                <!-- 自動分類結果 -->
-                <div class="bg-white rounded-lg p-3">
-                    <h3 class="font-medium text-blue-800 mb-2">自動分類</h3>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                            <span class="text-gray-600">投資戦略:</span>
-                            <span class="ml-1 font-medium" id="auto-investment-strategy">-</span>
+    <!-- メインコンテンツ -->
+    <div class="entry-create__content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <!-- メインフォーム -->
+        <main class="entry-create__main lg:col-span-2 space-y-4 md:space-y-6">
+            <form method="post" class="entry-form space-y-6" novalidate>
+                {% csrf_token %}
+                
+                <!-- エントリー基本情報 -->
+                <section class="form-section" aria-labelledby="basic-info-heading">
+                    <div class="app-card">
+                        <div class="app-card__header">
+                            <h2 id="basic-info-heading" class="app-card__title flex items-center gap-2">
+                                <i data-lucide="file-text" class="w-5 h-5 text-blue-600" aria-hidden="true"></i>
+                                エントリー情報
+                            </h2>
                         </div>
-                        <div>
-                            <span class="text-gray-600">コンテンツ種別:</span>
-                            <span class="ml-1 font-medium" id="auto-content-type">-</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">分析深度:</span>
-                            <span class="ml-1 font-medium" id="auto-analysis-depth">-</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">信頼度:</span>
-                            <span class="ml-1 font-medium" id="auto-confidence">-</span>
+                        <div class="app-card__content space-y-4">
+                            <!-- エントリータイプ -->
+                            <div class="form-field">
+                                <label for="id_entry_type" class="form-label block text-sm font-medium text-gray-700 mb-2">
+                                    エントリータイプ
+                                    <span class="text-red-500 ml-1" aria-label="必須項目">*</span>
+                                </label>
+                                <div class="entry-type-selection grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                                    <label class="entry-type-option cursor-pointer">
+                                        <input type="radio" name="entry_type" value="analysis" class="sr-only" required>
+                                        <div class="entry-type-card flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                            <i data-lucide="search" class="w-6 h-6 text-gray-600 mb-1" aria-hidden="true"></i>
+                                            <span class="text-xs font-medium">分析</span>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="entry-type-option cursor-pointer">
+                                        <input type="radio" name="entry_type" value="earnings" class="sr-only">
+                                        <div class="entry-type-card flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                            <i data-lucide="bar-chart" class="w-6 h-6 text-gray-600 mb-1" aria-hidden="true"></i>
+                                            <span class="text-xs font-medium">決算情報</span>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="entry-type-option cursor-pointer">
+                                        <input type="radio" name="entry_type" value="news" class="sr-only">
+                                        <div class="entry-type-card flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                            <i data-lucide="newspaper" class="w-6 h-6 text-gray-600 mb-1" aria-hidden="true"></i>
+                                            <span class="text-xs font-medium">ニュース</span>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="entry-type-option cursor-pointer">
+                                        <input type="radio" name="entry_type" value="calculation" class="sr-only">
+                                        <div class="entry-type-card flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                            <i data-lucide="calculator" class="w-6 h-6 text-gray-600 mb-1" aria-hidden="true"></i>
+                                            <span class="text-xs font-medium">計算結果</span>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="entry-type-option cursor-pointer">
+                                        <input type="radio" name="entry_type" value="memo" class="sr-only">
+                                        <div class="entry-type-card flex flex-col items-center p-3 border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-colors">
+                                            <i data-lucide="sticky-note" class="w-6 h-6 text-gray-600 mb-1" aria-hidden="true"></i>
+                                            <span class="text-xs font-medium">メモ</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <!-- AI推奨タイプ通知 -->
+                                <div id="ai-type-suggestion" class="ai-suggestion hidden mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-start gap-2">
+                                        <i data-lucide="sparkles" class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" aria-hidden="true"></i>
+                                        <div class="text-sm">
+                                            <div class="font-medium text-blue-800">AI推奨</div>
+                                            <div class="text-blue-700" id="ai-type-text">内容に基づいて推奨タイプを表示します</div>
+                                            <button type="button" 
+                                                    class="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                                                    onclick="applyAITypeRecommendation()"
+                                                    id="apply-ai-type">
+                                                推奨タイプを適用
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- タイトル -->
+                            <div class="form-field">
+                                <label for="id_title" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                                    タイトル
+                                    <span class="text-gray-500 text-xs ml-1">(任意)</span>
+                                </label>
+                                <input type="text" 
+                                       id="id_title"
+                                       name="title"
+                                       class="app-input"
+                                       placeholder="例: Q3決算分析"
+                                       maxlength="200"
+                                       aria-describedby="title-help">
+                                <div id="title-help" class="text-xs text-gray-500 mt-1">
+                                    空欄の場合は自動で設定されます
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- AI推奨タグ -->
-                <div class="bg-white rounded-lg p-3">
-                    <h3 class="font-medium text-blue-800 mb-2">AI推奨タグ</h3>
-                    <div id="ai-recommended-tags" class="flex flex-wrap gap-2">
-                        <!-- AIタグがここに動的に追加される -->
-                    </div>
-                </div>
-
-                <!-- 推奨アクション -->
-                <div class="bg-white rounded-lg p-3" id="auto-recommended-actions">
-                    <h3 class="font-medium text-blue-800 mb-2">推奨アクション</h3>
-                    <div id="auto-actions-list" class="space-y-1 text-sm">
-                        <!-- 推奨アクションがここに動的に追加される -->
-                    </div>
-                </div>
-
-                <!-- 分析スコア -->
-                <div class="bg-white rounded-lg p-3">
-                    <h3 class="font-medium text-blue-800 mb-2">分析スコア</h3>
-                    <div class="flex items-center gap-2">
-                        <div class="flex-1 bg-gray-200 rounded-full h-2">
-                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" id="auto-analysis-score-bar" style="width: 0%"></div>
+                <!-- コンテンツ入力 -->
+                <section class="form-section" aria-labelledby="content-heading">
+                    <div class="app-card">
+                        <div class="app-card__header">
+                            <h2 id="content-heading" class="app-card__title flex items-center gap-2">
+                                <i data-lucide="edit-3" class="w-5 h-5 text-green-600" aria-hidden="true"></i>
+                                内容
+                                <span class="app-badge app-badge--primary text-xs ml-auto">必須</span>
+                            </h2>
                         </div>
-                        <span class="text-sm font-medium" id="auto-analysis-score-text">0</span>
-                    </div>
-                </div>
+                        <div class="app-card__content">
+                            <!-- エディターツールバー -->
+                            <div class="editor-toolbar flex items-center gap-2 p-2 border border-gray-200 rounded-t-lg bg-gray-50">
+                                <button type="button" 
+                                        class="toolbar-btn app-btn app-btn--ghost app-btn--sm p-2"
+                                        onclick="insertText('**', '**')"
+                                        title="太字"
+                                        aria-label="太字">
+                                    <i data-lucide="bold" class="w-4 h-4" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" 
+                                        class="toolbar-btn app-btn app-btn--ghost app-btn--sm p-2"
+                                        onclick="insertText('*', '*')"
+                                        title="斜体"
+                                        aria-label="斜体">
+                                    <i data-lucide="italic" class="w-4 h-4" aria-hidden="true"></i>
+                                </button>
+                                <div class="toolbar-divider w-px h-6 bg-gray-300"></div>
+                                <button type="button" 
+                                        class="toolbar-btn app-btn app-btn--ghost app-btn--sm p-2"
+                                        onclick="insertText('- ', '')"
+                                        title="リスト"
+                                        aria-label="リスト">
+                                    <i data-lucide="list" class="w-4 h-4" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" 
+                                        class="toolbar-btn app-btn app-btn--ghost app-btn--sm p-2"
+                                        onclick="insertText('| ', ' | ', ' |\n|---|---|\n| ', ' | ', ' |')"
+                                        title="表"
+                                        aria-label="表">
+                                    <i data-lucide="table" class="w-4 h-4" aria-hidden="true"></i>
+                                </button>
+                                <div class="toolbar-divider w-px h-6 bg-gray-300"></div>
+                                <div class="character-count text-xs text-gray-500 ml-auto">
+                                    <span id="char-count">0</span> / 5000文字
+                                </div>
+                            </div>
 
-                <!-- 自動エントリータイプ設定 -->
-                <div class="bg-white rounded-lg p-3">
-                    <h3 class="font-medium text-blue-800 mb-2">AI推奨設定</h3>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">エントリータイプ自動設定</span>
-                        <button type="button" id="apply-auto-type" class="tw-btn-outline tw-btn-sm" style="display: none;">
-                            <i data-lucide="wand-2" class="w-3 h-3"></i>
-                            適用
+                            <!-- メインエディター -->
+                            <div class="editor-container relative">
+                                <textarea id="id_content"
+                                          name="content"
+                                          class="app-textarea rounded-t-none border-t-0 resize-none"
+                                          rows="12"
+                                          placeholder="分析内容を入力してください...
+
+例:
+・売上高は前年同期比12%増の8.9兆円
+・営業利益は15%増の2.1兆円と好調
+・北米市場での販売増が寄与
+・配当も前年から5円増配予定"
+                                          required
+                                          maxlength="5000"
+                                          aria-describedby="content-help"
+                                          onkeydown="handleEditorShortcuts(event)"></textarea>
+                                
+                                <!-- AI分析インジケーター -->
+                                <div id="ai-analysis-indicator" class="absolute bottom-3 right-3 hidden">
+                                    <div class="flex items-center gap-2 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                                        <div class="animate-spin rounded-full h-3 w-3 border-b border-blue-700" aria-hidden="true"></div>
+                                        <span>AI分析中...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="content-help" class="text-xs text-gray-500 mt-1">
+                                20文字以上入力するとAIによるリアルタイム分析が開始されます
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- タグセクション -->
+                <section class="form-section" aria-labelledby="tags-heading">
+                    <div class="app-card">
+                        <div class="app-card__header">
+                            <h2 id="tags-heading" class="app-card__title flex items-center gap-2">
+                                <i data-lucide="tag" class="w-5 h-5 text-purple-600" aria-hidden="true"></i>
+                                タグ
+                                <span class="app-badge app-badge--secondary text-xs ml-auto">任意</span>
+                            </h2>
+                        </div>
+                        <div class="app-card__content space-y-4">
+                            <!-- タグ入力 -->
+                            <div class="form-field">
+                                <label for="id_tags" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                                    タグ
+                                </label>
+                                <input type="text" 
+                                       id="id_tags"
+                                       name="tags"
+                                       class="app-input"
+                                       placeholder="タグをカンマ区切りで入力"
+                                       aria-describedby="tags-help">
+                                <div id="tags-help" class="text-xs text-gray-500 mt-1">
+                                    例: 決算分析, 業績好調, Q3
+                                </div>
+                            </div>
+
+                            <!-- AI推奨タグ -->
+                            <div id="ai-recommended-tags-section" class="ai-tags-section hidden">
+                                <h3 class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-blue-600" aria-hidden="true"></i>
+                                    AI推奨タグ
+                                </h3>
+                                <div id="ai-recommended-tags" class="flex flex-wrap gap-2">
+                                    <!-- AIタグがここに動的に追加される -->
+                                </div>
+                            </div>
+
+                            <!-- おすすめタグ -->
+                            <div class="suggested-tags">
+                                <h3 class="text-sm font-medium text-gray-700 mb-2">おすすめタグ</h3>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('決算分析')">
+                                        #決算分析
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('業績好調')">
+                                        #業績好調
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('テクニカル')">
+                                        #テクニカル
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('ファンダメンタル')">
+                                        #ファンダメンタル
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('配当計算')">
+                                        #配当計算
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('リスク分析')">
+                                        #リスク分析
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- フォームアクション -->
+                <div class="form-actions sticky bottom-0 bg-white border-t border-gray-200 p-4 -mx-4 sm:mx-0 sm:relative sm:bottom-auto sm:bg-transparent sm:border-t-0 sm:p-0 z-10">
+                    <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                        <button type="button" 
+                                class="app-btn app-btn--secondary order-2 sm:order-1"
+                                onclick="saveDraft()">
+                            <i data-lucide="save" class="w-4 h-4" aria-hidden="true"></i>
+                            下書き保存
+                        </button>
+                        <a href="{% url 'notebook_detail' notebook.pk %}" 
+                           class="app-btn app-btn--ghost order-3 sm:order-2"
+                           onclick="return confirmCancel()">
+                            キャンセル
+                        </a>
+                        <button type="submit" 
+                                class="app-btn app-btn--primary order-1 sm:order-3"
+                                id="submit-button">
+                            <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+                            エントリーを作成
                         </button>
                     </div>
-                    <div class="text-xs text-gray-500 mt-1" id="auto-type-suggestion">
-                        <!-- 推奨エントリータイプがここに表示される -->
+                </div>
+            </form>
+        </main>
+
+        <!-- サイドバー -->
+        <aside class="entry-create__sidebar space-y-4 md:space-y-6">
+            <!-- リアルタイムAI分析 -->
+            <section class="ai-analysis" aria-labelledby="ai-analysis-heading">
+                <div class="app-card border-blue-200 bg-blue-50" id="ai-analysis-panel" style="display: none;">
+                    <div class="app-card__header">
+                        <h2 id="ai-analysis-heading" class="app-card__title flex items-center gap-2 text-blue-900">
+                            <i data-lucide="sparkles" class="w-5 h-5" aria-hidden="true"></i>
+                            リアルタイムAI分析
+                        </h2>
+                    </div>
+                    <div class="app-card__content space-y-4">
+                        <!-- 自動分類結果 -->
+                        <div class="ai-classification bg-white rounded-lg p-3">
+                            <h3 class="font-medium text-blue-800 mb-2">自動分類</h3>
+                            <div class="grid grid-cols-1 gap-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">投資戦略:</span>
+                                    <span class="font-medium" id="auto-investment-strategy">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">コンテンツ種別:</span>
+                                    <span class="font-medium" id="auto-content-type">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">分析深度:</span>
+                                    <span class="font-medium" id="auto-analysis-depth">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">信頼度:</span>
+                                    <span class="font-medium" id="auto-confidence">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 推奨アクション -->
+                        <div class="recommended-actions bg-white rounded-lg p-3">
+                            <h3 class="font-medium text-blue-800 mb-2">推奨アクション</h3>
+                            <div id="auto-actions-list" class="space-y-1 text-sm">
+                                <!-- 推奨アクションが動的に追加される -->
+                            </div>
+                        </div>
+
+                        <!-- 分析スコア -->
+                        <div class="analysis-score bg-white rounded-lg p-3">
+                            <h3 class="font-medium text-blue-800 mb-2">分析スコア</h3>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                                         id="auto-analysis-score-bar" 
+                                         style="width: 0%"></div>
+                                </div>
+                                <span class="text-sm font-medium" id="auto-analysis-score-text">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- タグ -->
-        <div class="tw-card">
-            <div class="tw-card-header">
-                <h2 class="tw-card-title flex items-center gap-2">
-                    <i data-lucide="tag" class="w-5 h-5"></i>
-                    タグ
-                </h2>
-            </div>
-            <div class="tw-card-content space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">タグ</label>
-                    {{ form.tags }}
-                </div>
-
-                <!-- おすすめタグ -->
-                <div>
-                    <label class="block text-sm text-gray-600 mb-2">おすすめタグ</label>
-                    <div class="flex flex-wrap gap-2">
-                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('決算分析')">
-                            #決算分析
-                        </span>
-                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('業績好調')">
-                            #業績好調
-                        </span>
-                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('テクニカル')">
-                            #テクニカル
-                        </span>
-                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('ファンダメンタル')">
-                            #ファンダメンタル
-                        </span>
-                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('配当計算')">
-                            #配当計算
-                        </span>
-                        <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('リスク分析')">
-                            #リスク分析
-                        </span>
+            <!-- プレビュー -->
+            <section class="entry-preview" aria-labelledby="preview-heading">
+                <div class="app-card" id="preview-panel" style="display: none;">
+                    <div class="app-card__header">
+                        <h2 id="preview-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="eye" class="w-5 h-5" aria-hidden="true"></i>
+                            プレビュー
+                        </h2>
+                    </div>
+                    <div class="app-card__content">
+                        <div id="preview-content" class="prose prose-sm max-w-none">
+                            <!-- プレビューコンテンツが動的に生成される -->
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- 保存ボタン -->
-        <div class="flex justify-end gap-3">
-            <a href="{% url 'notebook_detail' notebook.pk %}" class="tw-btn-outline">
-                キャンセル
-            </a>
-            <button type="submit" class="tw-btn-primary">
-                <i data-lucide="save" class="w-4 h-4"></i>
-                保存
-            </button>
-        </div>
-    </form>
+            <!-- ノート情報 -->
+            <section class="notebook-info" aria-labelledby="notebook-info-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="notebook-info-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-5 h-5" aria-hidden="true"></i>
+                            ノート情報
+                        </h2>
+                    </div>
+                    <div class="app-card__content space-y-3">
+                        <div class="notebook-summary">
+                            <h3 class="font-semibold text-sm text-gray-900 truncate">{{ notebook.title }}</h3>
+                            {% if notebook.subtitle %}
+                                <p class="text-xs text-gray-600 mt-1">{{ notebook.subtitle }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="notebook-stats grid grid-cols-2 gap-3 text-sm">
+                            <div class="stat-item">
+                                <span class="text-gray-600">現在価格:</span>
+                                <div class="font-semibold">
+                                    {% if notebook.current_price %}
+                                        ¥{{ notebook.current_price|floatformat:0 }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="text-gray-600">目標価格:</span>
+                                <div class="font-semibold text-green-600">
+                                    {% if notebook.target_price %}
+                                        ¥{{ notebook.target_price|floatformat:0 }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="text-gray-600">記録数:</span>
+                                <div class="font-semibold">{{ notebook.entry_count }}件</div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="text-gray-600">最終更新:</span>
+                                <div class="font-semibold">{{ notebook.updated_at|timesince }}前</div>
+                            </div>
+                        </div>
+                        
+                        <a href="{% url 'notebook_detail' notebook.pk %}" 
+                           class="app-btn app-btn--secondary w-full app-btn--sm">
+                            <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+                            ノートを表示
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- クイック計算 -->
+            <section class="quick-calculator" aria-labelledby="calc-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="calc-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-5 h-5" aria-hidden="true"></i>
+                            クイック計算
+                        </h2>
+                    </div>
+                    <div class="app-card__content space-y-3">
+                        <button class="calc-btn app-btn app-btn--secondary w-full app-btn--sm text-left"
+                                onclick="insertCalculation('dividend')">
+                            <i data-lucide="percent" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                            配当利回り計算
+                        </button>
+                        <button class="calc-btn app-btn app-btn--secondary w-full app-btn--sm text-left"
+                                onclick="insertCalculation('investment')">
+                            <i data-lucide="coins" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                            投資金額計算
+                        </button>
+                        <button class="calc-btn app-btn app-btn--secondary w-full app-btn--sm text-left"
+                                onclick="insertCalculation('target')">
+                            <i data-lucide="target" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                            目標達成率
+                        </button>
+                        <a href="{% url 'calculator' %}" 
+                           class="app-btn app-btn--ghost w-full app-btn--sm">
+                            <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+                            詳細計算ツール
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </div>
 </div>
 
+<!-- テンプレートモーダル -->
+<div id="template-modal" class="modal fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm hidden" aria-hidden="true">
+    <div class="modal-content bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto mt-8 max-h-[80vh] overflow-hidden">
+        <div class="modal-header p-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">テンプレート選択</h3>
+                <button type="button" 
+                        class="app-btn app-btn--ghost p-2"
+                        onclick="closeTemplateModal()"
+                        aria-label="モーダルを閉じる">
+                    <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <div class="modal-body p-4 overflow-y-auto">
+            <div class="templates-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- テンプレート項目 -->
+                <div class="template-item cursor-pointer border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                     onclick="useTemplate('earnings')">
+                    <h4 class="font-medium text-gray-900 mb-2">決算分析テンプレート</h4>
+                    <p class="text-sm text-gray-600 mb-3">四半期決算の分析に使用するテンプレート</p>
+                    <div class="text-xs text-gray-500">売上高、利益、セグメント別分析など</div>
+                </div>
+                
+                <div class="template-item cursor-pointer border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                     onclick="useTemplate('technical')">
+                    <h4 class="font-medium text-gray-900 mb-2">テクニカル分析テンプレート</h4>
+                    <p class="text-sm text-gray-600 mb-3">チャート分析用のテンプレート</p>
+                    <div class="text-xs text-gray-500">移動平均、RSI、サポート・レジスタンスなど</div>
+                </div>
+                
+                <div class="template-item cursor-pointer border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                     onclick="useTemplate('news')">
+                    <h4 class="font-medium text-gray-900 mb-2">ニュース分析テンプレート</h4>
+                    <p class="text-sm text-gray-600 mb-3">ニュースの影響分析用テンプレート</p>
+                    <div class="text-xs text-gray-500">ニュース概要、影響度、対応策など</div>
+                </div>
+                
+                <div class="template-item cursor-pointer border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+                     onclick="useTemplate('memo')">
+                    <h4 class="font-medium text-gray-900 mb-2">メモテンプレート</h4>
+                    <p class="text-sm text-gray-600 mb-3">簡単なメモ・気づき用テンプレート</p>
+                    <div class="text-xs text-gray-500">日付、内容、アクションなど</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
 <script>
-    function addSuggestedTag(tag) {
-        const tagsInput = document.getElementById('id_tags');
-        const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+    // グローバル変数
+    let isFormDirty = false;
+    let aiAnalysisTimeout;
+    let lastAnalyzedContent = '';
+    let currentRecommendedType = '';
+    let isPreviewMode = false;
+
+    // フォーム初期化
+    function initializeForm() {
+        // エントリータイプ選択の設定
+        setupEntryTypeSelection();
         
-        if (!currentTags.includes(tag)) {
-            currentTags.push(tag);
-            tagsInput.value = currentTags.join(', ');
-        }
+        // リアルタイム分析の設定
+        setupRealtimeAnalysis();
+        
+        // エディター機能の設定
+        setupEditor();
+        
+        // フォーム変更の監視
+        const formElements = document.querySelectorAll('input, textarea, select');
+        formElements.forEach(element => {
+            element.addEventListener('input', () => {
+                isFormDirty = true;
+                updateCharCount();
+            });
+        });
+        
+        // 下書きデータの復元
+        restoreDraft();
+    }
+
+    // エントリータイプ選択の設定
+    function setupEntryTypeSelection() {
+        const typeOptions = document.querySelectorAll('.entry-type-option');
+        
+        typeOptions.forEach(option => {
+            const radio = option.querySelector('input[type="radio"]');
+            const card = option.querySelector('.entry-type-card');
+            
+            option.addEventListener('click', () => {
+                // 全ての選択を解除
+                typeOptions.forEach(opt => {
+                    opt.querySelector('.entry-type-card').classList.remove('border-blue-500', 'bg-blue-50');
+                    opt.querySelector('input[type="radio"]').checked = false;
+                });
+                
+                // 選択状態を設定
+                radio.checked = true;
+                card.classList.add('border-blue-500', 'bg-blue-50');
+                
+                // AI推奨を非表示
+                document.getElementById('ai-type-suggestion').classList.add('hidden');
+            });
+        });
     }
 
     // リアルタイムAI分析の設定
-    function setupRealtimeAIAnalysis() {
+    function setupRealtimeAnalysis() {
         const contentField = document.getElementById('id_content');
         const titleField = document.getElementById('id_title');
-        const typeField = document.getElementById('id_entry_type');
-        const aiPanel = document.getElementById('ai-analysis-panel');
-        
-        let analysisTimeout;
-        let lastAnalyzedContent = '';
-        let currentRecommendedType = '';
 
         function triggerAnalysis() {
-            clearTimeout(analysisTimeout);
+            clearTimeout(aiAnalysisTimeout);
             
             const content = contentField.value.trim();
             const title = titleField ? titleField.value.trim() : '';
             
             // 最小文字数チェック
             if (content.length < 20) {
-                aiPanel.style.display = 'none';
+                document.getElementById('ai-analysis-panel').style.display = 'none';
                 return;
             }
             
@@ -213,7 +644,10 @@
                 return;
             }
             
-            analysisTimeout = setTimeout(() => {
+            // AI分析インジケーター表示
+            document.getElementById('ai-analysis-indicator').classList.remove('hidden');
+            
+            aiAnalysisTimeout = setTimeout(() => {
                 performRealtimeAnalysis(content, title);
                 lastAnalyzedContent = content;
             }, 1000);
@@ -225,25 +659,6 @@
         }
         if (titleField) {
             titleField.addEventListener('input', triggerAnalysis);
-        }
-        if (typeField) {
-            typeField.addEventListener('change', triggerAnalysis);
-        }
-
-        // 自動タイプ適用ボタン
-        const applyAutoTypeBtn = document.getElementById('apply-auto-type');
-        if (applyAutoTypeBtn) {
-            applyAutoTypeBtn.addEventListener('click', function() {
-                if (currentRecommendedType) {
-                    typeField.value = currentRecommendedType;
-                    this.style.display = 'none';
-                    
-                    // 視覚的フィードバック
-                    const suggestion = document.getElementById('auto-type-suggestion');
-                    suggestion.innerHTML = '✓ エントリータイプを適用しました';
-                    suggestion.className = 'text-xs text-green-600 mt-1';
-                }
-            });
         }
     }
 
@@ -279,13 +694,20 @@
                 .then(categorizationData => {
                     if (categorizationData.success) {
                         displayRealtimeAnalysis(data.analysis, categorizationData.categorization);
+                        hideAIIndicator();
                     }
                 });
             }
         })
         .catch(error => {
             console.error('リアルタイム分析エラー:', error);
+            hideAIIndicator();
         });
+    }
+
+    // AI分析インジケーター非表示
+    function hideAIIndicator() {
+        document.getElementById('ai-analysis-indicator').classList.add('hidden');
     }
 
     // リアルタイム分析結果表示
@@ -314,6 +736,7 @@
         lucide.createIcons();
     }
 
+    // 自動分類結果表示
     function displayAutoCategorization(categorization) {
         const strategyLabels = {
             'dividend_income': '配当収入',
@@ -350,33 +773,45 @@
             Math.round(categorization.classification_confidence * 100) + '%';
     }
 
+    // AI推奨タグ表示
     function displayAIRecommendedTags(suggestedTags) {
+        const section = document.getElementById('ai-recommended-tags-section');
         const container = document.getElementById('ai-recommended-tags');
         
-        container.innerHTML = suggestedTags.map(tag => `
-            <span class="tw-badge-outline cursor-pointer hover:bg-blue-200 transition-colors" 
-                  onclick="addAITag('${tag}')">
-                ${tag}
-            </span>
-        `).join('');
+        if (suggestedTags.length > 0) {
+            container.innerHTML = suggestedTags.map(tag => `
+                <button type="button" 
+                        class="app-badge app-badge--outline cursor-pointer hover:bg-blue-200 transition-colors touch-friendly" 
+                        onclick="addAITag('${tag}')">
+                    ${tag}
+                </button>
+            `).join('');
+            section.classList.remove('hidden');
+        } else {
+            section.classList.add('hidden');
+        }
     }
 
+    // 推奨アクション表示
     function displayAutoRecommendedActions(actions) {
         const container = document.getElementById('auto-actions-list');
         
         if (!actions || actions.length === 0) {
-            container.innerHTML = '<div class="text-gray-500">推奨アクションはありません</div>';
+            container.innerHTML = '<div class="text-gray-500 text-sm">推奨アクションはありません</div>';
             return;
         }
         
         container.innerHTML = actions.map(action => `
             <div class="flex items-start gap-2">
-                <i data-lucide="arrow-right" class="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0"></i>
+                <i data-lucide="arrow-right" class="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" aria-hidden="true"></i>
                 <span>${action}</span>
             </div>
         `).join('');
+        
+        lucide.createIcons();
     }
 
+    // 分析スコア表示
     function displayAutoAnalysisScore(score) {
         const scoreBar = document.getElementById('auto-analysis-score-bar');
         const scoreText = document.getElementById('auto-analysis-score-text');
@@ -394,26 +829,11 @@
         }
     }
 
-    function addAITag(tag) {
-        const tagsInput = document.getElementById('id_tags');
-        const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
-        
-        if (!currentTags.includes(tag)) {
-            currentTags.push(tag);
-            tagsInput.value = currentTags.join(', ');
-            
-            // 視覚的フィードバック
-            event.target.classList.add('bg-blue-200');
-            setTimeout(() => {
-                event.target.classList.remove('bg-blue-200');
-            }, 500);
-        }
-    }
-
+    // エントリータイプ推奨
     function suggestEntryType(contentType) {
-        const typeField = document.getElementById('id_entry_type');
-        const suggestion = document.getElementById('auto-type-suggestion');
-        const applyBtn = document.getElementById('apply-auto-type');
+        const typeField = document.querySelector('input[name="entry_type"]:checked');
+        const suggestion = document.getElementById('ai-type-suggestion');
+        const suggestionText = document.getElementById('ai-type-text');
         
         const typeMapping = {
             'earnings_analysis': { value: 'earnings', label: '決算情報' },
@@ -426,55 +846,410 @@
         };
         
         const mappedType = typeMapping[contentType];
-        if (mappedType && typeField.value !== mappedType.value) {
+        if (mappedType && (!typeField || typeField.value !== mappedType.value)) {
             currentRecommendedType = mappedType.value;
-            suggestion.innerHTML = `推奨: ${mappedType.label}`;
-            suggestion.className = 'text-xs text-blue-600 mt-1';
-            applyBtn.style.display = 'inline-flex';
+            suggestionText.textContent = `内容から「${mappedType.label}」タイプを推奨します`;
+            suggestion.classList.remove('hidden');
         } else {
-            suggestion.innerHTML = '現在の設定が適切です';
-            suggestion.className = 'text-xs text-green-600 mt-1';
-            applyBtn.style.display = 'none';
+            suggestion.classList.add('hidden');
         }
     }
 
-    // ショートカットキー
-    function setupShortcuts() {
-        document.addEventListener('keydown', function(e) {
-            // Ctrl + Enter で保存
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                document.querySelector('form').submit();
+    // AI推奨タイプ適用
+    function applyAITypeRecommendation() {
+        if (currentRecommendedType) {
+            const targetOption = document.querySelector(`input[name="entry_type"][value="${currentRecommendedType}"]`);
+            if (targetOption) {
+                targetOption.click();
+                document.getElementById('ai-type-suggestion').classList.add('hidden');
             }
+        }
+    }
+
+    // AIタグ追加
+    function addAITag(tag) {
+        const tagsInput = document.getElementById('id_tags');
+        const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+        
+        if (!currentTags.includes(tag)) {
+            currentTags.push(tag);
+            tagsInput.value = currentTags.join(', ');
             
-            // Ctrl + T でタグフィールドにフォーカス
-            if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+            // 視覚的フィードバック
+            const button = event.target;
+            button.classList.add('bg-blue-200', 'border-blue-300');
+            setTimeout(() => {
+                button.classList.remove('bg-blue-200', 'border-blue-300');
+            }, 500);
+        }
+    }
+
+    // おすすめタグ追加
+    function addSuggestedTag(tag) {
+        const tagsInput = document.getElementById('id_tags');
+        const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+        
+        if (!currentTags.includes(tag)) {
+            currentTags.push(tag);
+            tagsInput.value = currentTags.join(', ');
+            
+            // 視覚的フィードバック
+            const button = event.target;
+            button.classList.add('bg-blue-200', 'border-blue-300');
+            setTimeout(() => {
+                button.classList.remove('bg-blue-200', 'border-blue-300');
+            }, 500);
+        }
+    }
+
+    // エディター機能設定
+    function setupEditor() {
+        const contentField = document.getElementById('id_content');
+        
+        // 文字数カウント
+        contentField.addEventListener('input', updateCharCount);
+        
+        // タブキーでインデント
+        contentField.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
                 e.preventDefault();
-                document.getElementById('id_tags').focus();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                
+                this.value = this.value.substring(0, start) + '\t' + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 1;
             }
         });
     }
 
-    // フォームバリデーション強化
-    function setupFormValidation() {
-        const form = document.querySelector('form');
+    // 文字数カウント更新
+    function updateCharCount() {
         const contentField = document.getElementById('id_content');
+        const charCount = document.getElementById('char-count');
+        const count = contentField.value.length;
         
-        form.addEventListener('submit', function(e) {
-            if (contentField.value.trim().length < 10) {
-                e.preventDefault();
-                alert('内容は10文字以上入力してください');
-                contentField.focus();
-                return false;
-            }
-        });
+        charCount.textContent = count;
+        
+        // 警告色設定
+        if (count > 4500) {
+            charCount.classList.add('text-red-600');
+        } else if (count > 4000) {
+            charCount.classList.add('text-yellow-600');
+            charCount.classList.remove('text-red-600');
+        } else {
+            charCount.classList.remove('text-red-600', 'text-yellow-600');
+        }
     }
+
+    // エディターショートカット
+    function handleEditorShortcuts(event) {
+        // Ctrl + S で下書き保存
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+            event.preventDefault();
+            saveDraft();
+        }
+        
+        // Ctrl + Enter で送信
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            document.querySelector('form').submit();
+        }
+    }
+
+    // テキスト挿入
+    function insertText(before, after = '', newLineBefore = '', newLineAfter = '') {
+        const contentField = document.getElementById('id_content');
+        const start = contentField.selectionStart;
+        const end = contentField.selectionEnd;
+        const selectedText = contentField.value.substring(start, end);
+        
+        const replacement = newLineBefore + before + selectedText + after + newLineAfter;
+        
+        contentField.value = contentField.value.substring(0, start) + replacement + contentField.value.substring(end);
+        
+        // カーソル位置を調整
+        const newCursorPos = start + before.length + newLineBefore.length;
+        contentField.selectionStart = newCursorPos;
+        contentField.selectionEnd = newCursorPos + selectedText.length;
+        
+        contentField.focus();
+        updateCharCount();
+    }
+
+    // 計算結果挿入
+    function insertCalculation(type) {
+        const templates = {
+            'dividend': '\n## 配当利回り計算\n- 年間配当金: ¥ 円\n- 株価: ¥ 円\n- 配当利回り: %\n',
+            'investment': '\n## 投資金額計算\n- 投資金額: ¥ 円\n- 株価: ¥ 円\n- 購入可能株数: 株\n',
+            'target': '\n## 目標達成率\n- 現在価格: ¥ 円\n- 目標価格: ¥ 円\n- 達成率: %\n'
+        };
+        
+        const template = templates[type];
+        if (template) {
+            insertText(template);
+        }
+    }
+
+    // プレビューモード切り替え
+    function togglePreviewMode() {
+        const previewPanel = document.getElementById('preview-panel');
+        const previewToggle = document.getElementById('preview-toggle');
+        
+        isPreviewMode = !isPreviewMode;
+        
+        if (isPreviewMode) {
+            updatePreview();
+            previewPanel.style.display = 'block';
+            previewToggle.setAttribute('aria-pressed', 'true');
+            previewToggle.classList.add('bg-blue-100', 'border-blue-300');
+        } else {
+            previewPanel.style.display = 'none';
+            previewToggle.setAttribute('aria-pressed', 'false');
+            previewToggle.classList.remove('bg-blue-100', 'border-blue-300');
+        }
+    }
+
+    // プレビュー更新
+    function updatePreview() {
+        const content = document.getElementById('id_content').value;
+        const title = document.getElementById('id_title').value;
+        const entryType = document.querySelector('input[name="entry_type"]:checked');
+        const previewContent = document.getElementById('preview-content');
+        
+        let html = '';
+        
+        if (title) {
+            html += `<h2 class="text-lg font-semibold mb-3">${title}</h2>`;
+        }
+        
+        if (entryType) {
+            const typeLabels = {
+                'analysis': '分析',
+                'earnings': '決算情報', 
+                'news': 'ニュース',
+                'calculation': '計算結果',
+                'memo': 'メモ'
+            };
+            html += `<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 mb-3">${typeLabels[entryType.value]}</span>`;
+        }
+        
+        // マークダウン風のプレビュー（簡易版）
+        let formattedContent = content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/^## (.+)$/gm, '<h3 class="text-base font-semibold mt-4 mb-2">$1</h3>')
+            .replace(/\n/g, '<br>');
+        
+        // リストのラップ
+        formattedContent = formattedContent.replace(/(<li>.*<\/li>)/g, '<ul class="list-disc list-inside">$1</ul>');
+        
+        html += `<div class="text-sm text-gray-700 leading-relaxed">${formattedContent}</div>`;
+        
+        previewContent.innerHTML = html;
+    }
+
+    // テンプレートモーダル
+    function openTemplateModal() {
+        const modal = document.getElementById('template-modal');
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        
+        // フォーカストラップ
+        const firstFocusable = modal.querySelector('button');
+        if (firstFocusable) firstFocusable.focus();
+        
+        // スクロール防止
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeTemplateModal() {
+        const modal = document.getElementById('template-modal');
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        
+        // スクロール復元
+        document.body.style.overflow = '';
+    }
+
+    // テンプレート使用
+    function useTemplate(templateType) {
+        const templates = {
+            'earnings': `## 決算分析
+
+### 売上高
+- 売上高: 億円（前年同期比 %）
+- 主要セグメント別売上:
+  - セグメント1: 
+  - セグメント2: 
+
+### 利益
+- 営業利益: 億円（前年同期比 %）
+- 純利益: 億円（前年同期比 %）
+
+### 今期見通し
+- 通期売上予想: 
+- 通期利益予想: 
+
+### 所感
+- `,
+            
+            'technical': `## テクニカル分析
+
+### チャート状況
+- 現在価格: ¥
+- 移動平均線:
+  - 5日移動平均: 
+  - 25日移動平均: 
+  - 75日移動平均: 
+
+### テクニカル指標
+- RSI: 
+- MACD: 
+- 出来高: 
+
+### サポート・レジスタンス
+- サポートライン: ¥
+- レジスタンスライン: ¥
+
+### 判断
+- `,
+            
+            'news': `## ニュース分析
+
+### ニュース概要
+- 発表日: 
+- 内容: 
+
+### 影響度分析
+- 短期的影響: 
+- 中長期的影響: 
+- 株価への影響予想: 
+
+### 対応策
+- `,
+            
+            'memo': `## 投資メモ
+
+### 日付
+${new Date().toLocaleDateString('ja-JP')}
+
+### 内容
+
+
+### 次のアクション
+- `
+        };
+        
+        const template = templates[templateType];
+        if (template) {
+            document.getElementById('id_content').value = template;
+            updateCharCount();
+            closeTemplateModal();
+        }
+    }
+
+    // 下書き保存
+    function saveDraft() {
+        const formData = new FormData(document.querySelector('form'));
+        const draftData = Object.fromEntries(formData.entries());
+        draftData.notebook_id = {{ notebook.pk }};
+        
+        localStorage.setItem('entry_draft', JSON.stringify(draftData));
+        
+        // 成功メッセージ表示
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> 保存完了';
+        button.disabled = true;
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            lucide.createIcons();
+        }, 2000);
+    }
+
+    // 下書き復元
+    function restoreDraft() {
+        const draftData = localStorage.getItem('entry_draft');
+        if (draftData) {
+            try {
+                const data = JSON.parse(draftData);
+                if (data.notebook_id == {{ notebook.pk }}) {
+                    Object.keys(data).forEach(key => {
+                        if (key !== 'notebook_id') {
+                            const field = document.querySelector(`[name="${key}"]`);
+                            if (field) {
+                                if (field.type === 'radio') {
+                                    const radio = document.querySelector(`[name="${key}"][value="${data[key]}"]`);
+                                    if (radio) radio.click();
+                                } else {
+                                    field.value = data[key];
+                                }
+                            }
+                        }
+                    });
+                    updateCharCount();
+                }
+            } catch (error) {
+                console.error('下書き復元エラー:', error);
+            }
+        }
+    }
+
+    // キャンセル確認
+    function confirmCancel() {
+        if (isFormDirty) {
+            return confirm('入力中の内容が失われます。本当にキャンセルしますか？');
+        }
+        return true;
+    }
+
+    // ページ離脱時の確認
+    window.addEventListener('beforeunload', function(e) {
+        if (isFormDirty) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // ESCキーでモーダルを閉じる
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeTemplateModal();
+        }
+    });
+
+    // モーダル背景クリックで閉じる
+    document.getElementById('template-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeTemplateModal();
+        }
+    });
+
+    // フォーム送信
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // 下書きデータ削除
+        localStorage.removeItem('entry_draft');
+        
+        // 送信ボタン無効化
+        const submitButton = document.getElementById('submit-button');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>作成中...';
+    });
 
     // DOMロード後に実行
     document.addEventListener('DOMContentLoaded', function() {
-        setupRealtimeAIAnalysis();
-        setupShortcuts();
-        setupFormValidation();
+        initializeForm();
+        
+        // プレビューモード時の内容更新監視
+        const contentField = document.getElementById('id_content');
+        contentField.addEventListener('input', function() {
+            if (isPreviewMode) {
+                updatePreview();
+            }
+        });
     });
 </script>
 {% endblock %}

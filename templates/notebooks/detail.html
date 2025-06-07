@@ -1,458 +1,766 @@
-<!-- templates/notebooks/detail.html -->
+<!-- templates/notebooks/detail.html (改良版) -->
 {% extends 'base.html' %}
 
 {% block title %}{{ notebook.title }} - 株式分析記録アプリ{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto p-4 space-y-6">
-    <!-- ヘッダー -->
-    <div class="flex items-center gap-4">
-        <a href="{% url 'dashboard' %}" class="tw-btn-outline tw-btn-sm">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            戻る
-        </a>
-        <div class="flex-1">
-            <h1 class="text-2xl font-bold">{{ notebook.title }}</h1>
-            <p class="text-gray-600">{{ notebook.subtitle }}</p>
-        </div>
-        <a href="{% url 'notebook_edit' notebook.pk %}" class="tw-btn-outline tw-btn-sm">
-            <i data-lucide="edit" class="w-4 h-4"></i>
-            編集
-        </a>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- メインコンテンツ -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- 投資目標 -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h2 class="tw-card-title flex items-center gap-2">
-                        <i data-lucide="target" class="w-5 h-5"></i>
-                        投資目標
-                    </h2>
-                </div>
-                <div class="tw-card-content space-y-4">
-                    {% if notebook.investment_goal %}
-                        <div>
-                            <label class="text-sm font-medium text-gray-700">投資理由・戦略</label>
-                            <p class="mt-1 text-gray-900">{{ notebook.investment_goal }}</p>
-                        </div>
-                    {% endif %}
-                    <div class="grid grid-cols-2 gap-4">
-                        {% if notebook.current_price %}
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">現在価格</label>
-                                <p class="text-lg font-semibold text-gray-900">¥{{ notebook.current_price|floatformat:0 }}</p>
-                            </div>
-                        {% endif %}
-                        {% if notebook.target_price %}
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">目標価格</label>
-                                <p class="text-lg font-semibold text-green-600">¥{{ notebook.target_price|floatformat:0 }}</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                    {% if notebook.risk_factors %}
-                        <div>
-                            <label class="text-sm font-medium text-gray-700">リスク要因</label>
-                            <p class="mt-1 text-red-600 flex items-start gap-2">
-                                <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
-                                {{ notebook.risk_factors }}
-                            </p>
-                        </div>
-                    {% endif %}
+<div class="notebook-detail max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6">
+    <!-- ページヘッダー -->
+    <header class="notebook-detail__header">
+        <nav aria-label="パンくずリスト" class="mb-4">
+            <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                <li><a href="{% url 'dashboard' %}" class="hover:text-gray-700 transition-colors">ホーム</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i></li>
+                <li><a href="{% url 'notebook_list' %}" class="hover:text-gray-700 transition-colors">ノート一覧</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i></li>
+                <li class="text-gray-900 font-medium truncate">{{ notebook.title }}</li>
+            </ol>
+        </nav>
+        
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div class="notebook-detail__header-content flex-1 min-w-0">
+                <h1 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 break-words">
+                    {{ notebook.title }}
+                </h1>
+                {% if notebook.subtitle %}
+                    <p class="text-sm md:text-base text-gray-600 mt-1 break-words">{{ notebook.subtitle }}</p>
+                {% endif %}
+                
+                <!-- メタ情報 -->
+                <div class="notebook-detail__meta flex flex-wrap items-center gap-3 md:gap-4 mt-3 text-xs md:text-sm text-gray-500">
+                    <span class="flex items-center gap-1">
+                        <i data-lucide="calendar" class="w-3 h-3 md:w-4 md:h-4" aria-hidden="true"></i>
+                        <time datetime="{{ notebook.created_at|date:'c' }}">
+                            作成: {{ notebook.created_at|date:'Y年m月d日' }}
+                        </time>
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3 h-3 md:w-4 md:h-4" aria-hidden="true"></i>
+                        <time datetime="{{ notebook.updated_at|date:'c' }}">
+                            更新: {{ notebook.updated_at|timesince }}前
+                        </time>
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i data-lucide="file-text" class="w-3 h-3 md:w-4 md:h-4" aria-hidden="true"></i>
+                        {{ notebook.entry_count }}件の記録
+                    </span>
                 </div>
             </div>
-
-            <!-- 記録エントリー -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <div class="flex items-center justify-between">
-                        <h2 class="tw-card-title">記録エントリー</h2>
-                        <a href="{% url 'entry_create' notebook.pk %}" class="tw-btn-primary tw-btn-sm">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                            新規記録
+            
+            <!-- アクションボタン -->
+            <div class="notebook-detail__actions flex items-center gap-2">
+                <a href="{% url 'notebook_edit' notebook.pk %}" 
+                   class="app-btn app-btn--secondary app-btn--sm touch-friendly">
+                    <i data-lucide="edit" class="w-4 h-4" aria-hidden="true"></i>
+                    <span class="hidden sm:inline">編集</span>
+                </a>
+                <a href="{% url 'entry_create' notebook.pk %}" 
+                   class="app-btn app-btn--primary app-btn--sm">
+                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                    <span class="hidden xs:inline">新規記録</span>
+                    <span class="xs:hidden">記録</span>
+                </a>
+                
+                <!-- その他メニュー -->
+                <div class="relative">
+                    <button type="button" 
+                            class="app-btn app-btn--ghost app-btn--sm p-2 touch-friendly"
+                            aria-label="その他のオプション"
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            onclick="toggleMoreMenu()"
+                            id="more-menu-button">
+                        <i data-lucide="more-vertical" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                    
+                    <div id="more-menu" 
+                         class="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden"
+                         role="menu"
+                         aria-labelledby="more-menu-button">
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" role="menuitem">
+                            <i data-lucide="share" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                            共有
+                        </a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" role="menuitem">
+                            <i data-lucide="download" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                            エクスポート
+                        </a>
+                        <hr class="my-1">
+                        <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors" role="menuitem">
+                            <i data-lucide="trash-2" class="w-4 h-4 inline mr-2" aria-hidden="true"></i>
+                            削除
                         </a>
                     </div>
                 </div>
-                <div class="tw-card-content">
-                    {% if entries_page.object_list %}
-                        <div class="space-y-4">
-                            {% for entry in entries_page.object_list %}
-                            <div class="border rounded-lg p-4">
-                                <div class="flex items-start justify-between mb-2">
-                                    <div class="flex items-center gap-2">
-                                        <span class="tw-badge-default">{{ entry.get_entry_type_display }}</span>
-                                        <h3 class="font-semibold">{{ entry.title|default:"エントリー" }}</h3>
-                                    </div>
-                                    <span class="text-xs text-gray-500 flex items-center gap-1">
-                                        <i data-lucide="calendar" class="w-3 h-3"></i>
-                                        {{ entry.created_at|date:"Y年m月d日" }}
-                                    </span>
-                                </div>
-                                <p class="text-gray-700 whitespace-pre-line mb-3">{{ entry.content }}</p>
-                                {% if entry.tags.all %}
-                                    <div class="flex flex-wrap gap-1">
-                                        {% for tag in entry.tags.all %}
-                                            <span class="tw-badge-outline text-xs">#{{ tag.name }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        
-                        <!-- ページネーション -->
-                        {% if entries_page.has_other_pages %}
-                            <div class="flex justify-center mt-6">
-                                <nav class="flex items-center gap-2">
-                                    {% if entries_page.has_previous %}
-                                        <a href="?page={{ entries_page.previous_page_number }}" class="tw-btn-outline tw-btn-sm">前へ</a>
-                                    {% endif %}
-                                    <span class="px-3 py-1 text-sm">
-                                        {{ entries_page.number }} / {{ entries_page.paginator.num_pages }}
-                                    </span>
-                                    {% if entries_page.has_next %}
-                                        <a href="?page={{ entries_page.next_page_number }}" class="tw-btn-outline tw-btn-sm">次へ</a>
-                                    {% endif %}
-                                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <div class="notebook-detail__content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <!-- メインエリア -->
+        <main class="notebook-detail__main lg:col-span-2 space-y-4 md:space-y-6">
+            <!-- 投資目標セクション -->
+            <section class="investment-goals" aria-labelledby="goals-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="goals-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="target" class="w-5 h-5" aria-hidden="true"></i>
+                            投資目標
+                        </h2>
+                    </div>
+                    <div class="app-card__content space-y-4">
+                        {% if notebook.investment_goal %}
+                            <div class="investment-goal">
+                                <h3 class="text-sm font-medium text-gray-700 mb-2">投資理由・戦略</h3>
+                                <p class="text-sm md:text-base text-gray-900 leading-relaxed whitespace-pre-wrap">{{ notebook.investment_goal }}</p>
                             </div>
                         {% endif %}
-                    {% else %}
-                        <div class="text-center py-8 text-gray-500">
-                            <i data-lucide="book-open" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
-                            <p>まだ記録がありません</p>
-                            <p class="text-sm">「新規記録」ボタンから最初の分析を記録しましょう</p>
+                        
+                        <!-- 価格情報 -->
+                        <div class="price-info grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {% if notebook.current_price %}
+                                <div class="price-item">
+                                    <h3 class="text-sm font-medium text-gray-700 mb-1">現在価格</h3>
+                                    <p class="text-lg md:text-xl font-semibold text-gray-900">
+                                        ¥{{ notebook.current_price|floatformat:0 }}
+                                    </p>
+                                </div>
+                            {% endif %}
+                            {% if notebook.target_price %}
+                                <div class="price-item">
+                                    <h3 class="text-sm font-medium text-gray-700 mb-1">目標価格</h3>
+                                    <p class="text-lg md:text-xl font-semibold text-green-600">
+                                        ¥{{ notebook.target_price|floatformat:0 }}
+                                    </p>
+                                </div>
+                            {% endif %}
+                            
+                            {% if notebook.current_price and notebook.target_price %}
+                                <div class="price-item sm:col-span-2">
+                                    <h3 class="text-sm font-medium text-gray-700 mb-1">目標まで</h3>
+                                    <div class="flex items-center gap-3">
+                                        <p class="text-lg md:text-xl font-semibold {% if notebook.price_change_percent > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ notebook.price_change_percent|floatformat:1 }}%
+                                        </p>
+                                        <div class="flex-1 bg-gray-200 rounded-full h-2 max-w-xs">
+                                            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500"
+                                                 style="width: {% if notebook.price_change_percent > 0 %}{{ notebook.price_change_percent|add:50 }}%{% else %}50%{% endif %}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
-                    {% endif %}
+                        
+                        {% if notebook.risk_factors %}
+                            <div class="risk-factors">
+                                <h3 class="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                    <i data-lucide="alert-circle" class="w-4 h-4 text-red-500" aria-hidden="true"></i>
+                                    リスク要因
+                                </h3>
+                                <p class="text-sm md:text-base text-red-600 leading-relaxed whitespace-pre-wrap bg-red-50 p-3 rounded-lg border border-red-200">
+                                    {{ notebook.risk_factors }}
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
+
+            <!-- 記録エントリーセクション -->
+            <section class="entries" aria-labelledby="entries-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <h2 id="entries-heading" class="app-card__title">記録エントリー</h2>
+                            <div class="flex items-center gap-2">
+                                <!-- フィルター -->
+                                <select class="app-select text-sm w-auto min-w-0" 
+                                        onchange="filterEntries(this.value)"
+                                        aria-label="エントリーフィルター">
+                                    <option value="">すべて</option>
+                                    <option value="analysis">分析</option>
+                                    <option value="earnings">決算情報</option>
+                                    <option value="news">ニュース</option>
+                                    <option value="calculation">計算結果</option>
+                                    <option value="memo">メモ</option>
+                                </select>
+                                <a href="{% url 'entry_create' notebook.pk %}" 
+                                   class="app-btn app-btn--primary app-btn--sm">
+                                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                                    <span class="hidden sm:inline">新規記録</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="app-card__content">
+                        {% if entries_page.object_list %}
+                            <div class="entries-list space-y-4" role="list">
+                                {% for entry in entries_page.object_list %}
+                                <article class="entry-card border rounded-lg p-3 md:p-4 hover:shadow-sm transition-shadow"
+                                         data-entry-type="{{ entry.entry_type }}"
+                                         role="listitem">
+                                    <header class="entry-card__header flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                                        <div class="entry-card__meta flex items-center gap-2 flex-wrap">
+                                            <span class="app-badge app-badge--primary text-xs">
+                                                {{ entry.get_entry_type_display }}
+                                            </span>
+                                            {% if entry.title %}
+                                                <h3 class="font-semibold text-base md:text-lg text-gray-900">
+                                                    {{ entry.title }}
+                                                </h3>
+                                            {% else %}
+                                                <h3 class="font-semibold text-base md:text-lg text-gray-900">
+                                                    エントリー
+                                                </h3>
+                                            {% endif %}
+                                        </div>
+                                        <div class="entry-card__actions flex items-center gap-2">
+                                            <time class="text-xs md:text-sm text-gray-500 flex items-center gap-1"
+                                                  datetime="{{ entry.created_at|date:'c' }}">
+                                                <i data-lucide="calendar" class="w-3 h-3" aria-hidden="true"></i>
+                                                {{ entry.created_at|date:"m月d日" }}
+                                            </time>
+                                            <button class="app-btn app-btn--ghost app-btn--sm p-1 touch-friendly"
+                                                    aria-label="エントリーメニュー"
+                                                    onclick="toggleEntryMenu({{ entry.pk }})">
+                                                <i data-lucide="more-vertical" class="w-4 h-4" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </header>
+                                    
+                                    <div class="entry-card__content">
+                                        <p class="text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-wrap line-clamp-4 mb-3">
+                                            {{ entry.content }}
+                                        </p>
+                                        
+                                        <!-- エントリータグ -->
+                                        {% if entry.tags.all %}
+                                            <div class="entry-card__tags flex flex-wrap gap-1" role="list" aria-label="タグ">
+                                                {% for tag in entry.tags.all %}
+                                                    <span class="app-badge app-badge--outline text-xs" role="listitem">
+                                                        #{{ tag.name }}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- エントリーメニュー -->
+                                    <div id="entry-menu-{{ entry.pk }}" 
+                                         class="entry-menu absolute right-0 top-8 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden">
+                                        <button class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                            編集
+                                        </button>
+                                        <button class="block w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                            削除
+                                        </button>
+                                    </div>
+                                </article>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- ページネーション -->
+                            {% if entries_page.has_other_pages %}
+                                <nav class="pagination flex justify-center mt-6" aria-label="エントリーページネーション">
+                                    <div class="flex items-center gap-2">
+                                        {% if entries_page.has_previous %}
+                                            <a href="?page={{ entries_page.previous_page_number }}" 
+                                               class="app-btn app-btn--secondary app-btn--sm">
+                                                <i data-lucide="chevron-left" class="w-4 h-4" aria-hidden="true"></i>
+                                                前へ
+                                            </a>
+                                        {% endif %}
+                                        
+                                        <span class="px-3 py-1 text-sm text-gray-600">
+                                            {{ entries_page.number }} / {{ entries_page.paginator.num_pages }}
+                                        </span>
+                                        
+                                        {% if entries_page.has_next %}
+                                            <a href="?page={{ entries_page.next_page_number }}" 
+                                               class="app-btn app-btn--secondary app-btn--sm">
+                                                次へ
+                                                <i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </nav>
+                            {% endif %}
+                        {% else %}
+                            <div class="empty-state text-center py-8 md:py-12">
+                                <i data-lucide="book-open" class="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-300" aria-hidden="true"></i>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">まだ記録がありません</h3>
+                                <p class="text-sm md:text-base text-gray-600 mb-4">
+                                    「新規記録」ボタンから最初の分析を記録しましょう
+                                </p>
+                                <a href="{% url 'entry_create' notebook.pk %}" class="app-btn app-btn--primary">
+                                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                                    最初の記録を作成
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+        </main>
 
         <!-- サイドバー -->
-        <div class="space-y-6">
-            <!-- 株価情報 -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h3 class="tw-card-title flex items-center gap-2">
-                        <i data-lucide="trending-up" class="w-5 h-5"></i>
-                        株価情報
-                    </h3>
-                </div>
-                <div class="tw-card-content space-y-3">
-                    {% if notebook.current_price %}
-                        <div class="text-center">
-                            <div class="text-2xl font-bold">¥{{ notebook.current_price|floatformat:0 }}</div>
-                            <div class="text-green-600">+45 (+1.6%)</div>
+        <aside class="notebook-detail__sidebar space-y-4 md:space-y-6">
+            <!-- 株価ウィジェット -->
+            <section class="stock-widget" aria-labelledby="stock-widget-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="stock-widget-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-5 h-5" aria-hidden="true"></i>
+                            株価情報
+                        </h2>
+                    </div>
+                    <div class="app-card__content space-y-3">
+                        {% if notebook.current_price %}
+                            <div class="stock-price text-center pb-3 border-b border-gray-200">
+                                <div class="text-2xl md:text-3xl font-bold text-gray-900">
+                                    ¥{{ notebook.current_price|floatformat:0 }}
+                                </div>
+                                <div class="text-sm text-green-600 mt-1">
+                                    +45 (+1.6%)
+                                    <i data-lucide="trending-up" class="w-4 h-4 inline ml-1" aria-hidden="true"></i>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="stock-metrics grid grid-cols-2 gap-2 text-sm">
+                            <div class="metric-item">
+                                <span class="text-gray-600">PER:</span>
+                                <span class="font-semibold ml-1">12.5</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">PBR:</span>
+                                <span class="font-semibold ml-1">1.2</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">配当利回り:</span>
+                                <span class="font-semibold ml-1 text-green-600">8.8%</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="text-gray-600">ROE:</span>
+                                <span class="font-semibold ml-1">9.2%</span>
+                            </div>
                         </div>
-                    {% endif %}
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                            <span class="text-gray-600">PER:</span>
-                            <span class="font-semibold ml-1">12.5</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">PBR:</span>
-                            <span class="font-semibold ml-1">1.2</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">配当利回り:</span>
-                            <span class="font-semibold ml-1">8.8%</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">ROE:</span>
-                            <span class="font-semibold ml-1">9.2%</span>
-                        </div>
+                        
+                        <button class="app-btn app-btn--secondary w-full app-btn--sm">
+                            <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+                            詳細チャートを見る
+                        </button>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- タグ -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h3 class="tw-card-title flex items-center gap-2">
-                        <i data-lucide="tag" class="w-5 h-5"></i>
-                        タグ
-                    </h3>
-                </div>
-                <div class="tw-card-content">
-                    <div class="flex flex-wrap gap-2">
+            <!-- タグセクション -->
+            <section class="tags-section" aria-labelledby="tags-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="tags-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="tag" class="w-5 h-5" aria-hidden="true"></i>
+                            タグ
+                        </h2>
+                    </div>
+                    <div class="app-card__content">
+                        <div class="flex flex-wrap gap-2" role="list" aria-label="ノートタグ">
+                            <!-- タグが動的に追加される -->
+                            <span class="app-badge app-badge--outline" role="listitem">#高配当</span>
+                            <span class="app-badge app-badge--outline" role="listitem">#自動車</span>
+                            <span class="app-badge app-badge--outline" role="listitem">#長期投資</span>
+                        </div>
+                        <button class="app-btn app-btn--ghost w-full app-btn--sm mt-3">
+                            <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                            タグを追加
+                        </button>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- AI洞察・関連コンテンツ -->
-            <div class="tw-card border-blue-200 bg-blue-50">
-                <div class="tw-card-header">
-                    <h3 class="tw-card-title flex items-center gap-2 text-blue-900">
-                        <i data-lucide="sparkles" class="w-5 h-5"></i>
-                        AI洞察・推奨
-                    </h3>
-                </div>
-                <div class="tw-card-content">
-                    <div id="ai-insights-loading" class="text-center py-4">
-                        <div class="inline-flex items-center gap-2 text-blue-600">
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                            <span>AI分析中...</span>
+            <section class="ai-insights" aria-labelledby="ai-insights-heading">
+                <div class="app-card border-blue-200 bg-blue-50">
+                    <div class="app-card__header">
+                        <h2 id="ai-insights-heading" class="app-card__title flex items-center gap-2 text-blue-900">
+                            <i data-lucide="sparkles" class="w-5 h-5" aria-hidden="true"></i>
+                            AI洞察・推奨
+                        </h2>
+                    </div>
+                    <div class="app-card__content">
+                        <div id="ai-insights-loading" class="text-center py-4">
+                            <div class="inline-flex items-center gap-2 text-blue-600">
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" aria-hidden="true"></div>
+                                <span>AI分析中...</span>
+                            </div>
+                        </div>
+                        
+                        <div id="ai-insights-content" class="hidden space-y-4">
+                            <!-- 自動分類結果 -->
+                            <div class="ai-classification bg-white rounded-lg p-3">
+                                <h3 class="font-medium text-blue-800 mb-2">自動分類結果</h3>
+                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                    <div>
+                                        <span class="text-gray-600">投資戦略:</span>
+                                        <span class="ml-1 font-medium" id="investment-strategy">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">分析深度:</span>
+                                        <span class="ml-1 font-medium" id="analysis-depth">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">コンテンツ種別:</span>
+                                        <span class="ml-1 font-medium" id="content-type">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-600">分類信頼度:</span>
+                                        <span class="ml-1 font-medium" id="classification-confidence">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 関連コンテンツ -->
+                            <div class="related-content bg-white rounded-lg p-3" id="related-content-section">
+                                <h3 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                                    <i data-lucide="link" class="w-4 h-4" aria-hidden="true"></i>
+                                    関連するノート
+                                </h3>
+                                <div id="related-content-list" class="space-y-2">
+                                    <!-- 関連コンテンツが動的に追加される -->
+                                </div>
+                            </div>
+
+                            <!-- 改善提案 -->
+                            <div class="improvement-suggestions bg-white rounded-lg p-3" id="improvement-suggestions-section">
+                                <h3 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                                    <i data-lucide="lightbulb" class="w-4 h-4" aria-hidden="true"></i>
+                                    改善提案
+                                </h3>
+                                <div id="improvement-suggestions-list" class="space-y-2">
+                                    <!-- 改善提案が動的に追加される -->
+                                </div>
+                            </div>
+
+                            <!-- 推奨アクション -->
+                            <div class="recommended-actions bg-white rounded-lg p-3" id="recommended-actions-section">
+                                <h3 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                                    <i data-lucide="zap" class="w-4 h-4" aria-hidden="true"></i>
+                                    推奨アクション
+                                </h3>
+                                <div id="recommended-actions-list" class="space-y-1 text-sm">
+                                    <!-- 推奨アクションが動的に追加される -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="ai-insights-error" class="hidden text-center py-4 text-red-600">
+                            <i data-lucide="alert-circle" class="w-5 h-5 mx-auto mb-2" aria-hidden="true"></i>
+                            <div>AI洞察の読み込みに失敗しました</div>
+                            <button onclick="loadAIInsights()" class="mt-2 app-btn app-btn--secondary app-btn--sm">
+                                再試行
+                            </button>
                         </div>
                     </div>
-                    <div id="ai-insights-content" class="hidden space-y-4">
-                        <!-- AI分析結果 -->
-                        <div class="bg-white rounded-lg p-3">
-                            <h4 class="font-medium text-blue-800 mb-2">自動分類結果</h4>
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                    <span class="text-gray-600">投資戦略:</span>
-                                    <span class="ml-1 font-medium" id="investment-strategy">-</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">分析深度:</span>
-                                    <span class="ml-1 font-medium" id="analysis-depth">-</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">コンテンツ種別:</span>
-                                    <span class="ml-1 font-medium" id="content-type">-</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">分類信頼度:</span>
-                                    <span class="ml-1 font-medium" id="classification-confidence">-</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 関連コンテンツ -->
-                        <div class="bg-white rounded-lg p-3" id="related-content-section">
-                            <h4 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                                <i data-lucide="link" class="w-4 h-4"></i>
-                                関連するノート
-                            </h4>
-                            <div id="related-content-list" class="space-y-2">
-                                <!-- 関連コンテンツがここに動的に追加される -->
-                            </div>
-                        </div>
-
-                        <!-- 改善提案 -->
-                        <div class="bg-white rounded-lg p-3" id="improvement-suggestions-section">
-                            <h4 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                                <i data-lucide="lightbulb" class="w-4 h-4"></i>
-                                改善提案
-                            </h4>
-                            <div id="improvement-suggestions-list" class="space-y-2">
-                                <!-- 改善提案がここに動的に追加される -->
-                            </div>
-                        </div>
-
-                        <!-- 推奨アクション -->
-                        <div class="bg-white rounded-lg p-3" id="recommended-actions-section">
-                            <h4 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                                <i data-lucide="zap" class="w-4 h-4"></i>
-                                推奨アクション
-                            </h4>
-                            <div id="recommended-actions-list" class="space-y-1">
-                                <!-- 推奨アクションがここに動的に追加される -->
-                            </div>
-                        </div>
-                    </div>
                 </div>
-            </div>
+            </section>
 
             <!-- クイック計算 -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h3 class="tw-card-title flex items-center gap-2">
-                        <i data-lucide="calculator" class="w-5 h-5"></i>
-                        クイック計算
-                    </h3>
+            <section class="quick-calculator" aria-labelledby="calculator-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="calculator-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-5 h-5" aria-hidden="true"></i>
+                            クイック計算
+                        </h2>
+                    </div>
+                    <div class="app-card__content space-y-3">
+                        <div>
+                            <label for="investment-amount" class="block text-sm text-gray-600 mb-1">投資金額</label>
+                            <input type="number" 
+                                   id="investment-amount"
+                                   class="app-input text-sm" 
+                                   placeholder="100000" 
+                                   onchange="updateCalculations()">
+                        </div>
+                        <div class="calculation-results space-y-2 text-sm">
+                            <div class="calculation-item flex justify-between">
+                                <span class="text-gray-600">購入可能株数:</span>
+                                <span class="font-semibold" id="stock-count">-</span>
+                            </div>
+                            <div class="calculation-item flex justify-between">
+                                <span class="text-gray-600">年間配当予想:</span>
+                                <span class="font-semibold text-green-600" id="dividend-estimate">-</span>
+                            </div>
+                            <div class="calculation-item flex justify-between">
+                                <span class="text-gray-600">配当利回り:</span>
+                                <span class="font-semibold text-green-600" id="yield-rate">-</span>
+                            </div>
+                        </div>
+                        <a href="{% url 'calculator' %}" class="app-btn app-btn--secondary w-full app-btn--sm">
+                            <i data-lucide="external-link" class="w-4 h-4" aria-hidden="true"></i>
+                            詳細計算ツール
+                        </a>
+                    </div>
                 </div>
-                <div class="tw-card-content space-y-3">
-                    <div>
-                        <label class="text-sm text-gray-600">投資金額</label>
-                        <input type="number" class="tw-input" placeholder="100000" id="investment-amount">
-                    </div>
-                    <div>
-                        <label class="text-sm text-gray-600">購入可能株数</label>
-                        <div class="text-lg font-semibold" id="stock-count">35株</div>
-                    </div>
-                    <div>
-                        <label class="text-sm text-gray-600">年間配当予想</label>
-                        <div class="text-lg font-semibold text-green-600" id="dividend-estimate">¥8,750</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </section>
+        </aside>
     </div>
 </div>
 
+<!-- JavaScript -->
 <script>
-// AI洞察データの読み込み
-document.addEventListener('DOMContentLoaded', function() {
-    loadAIInsights();
-    
-    // Lucide icons の初期化
-    lucide.createIcons();
-});
+    // AI洞察データの読み込み
+    function loadAIInsights() {
+        const notebookId = {{ notebook.pk }};
+        const loadingElement = document.getElementById('ai-insights-loading');
+        const contentElement = document.getElementById('ai-insights-content');
+        const errorElement = document.getElementById('ai-insights-error');
+        
+        // ローディング表示
+        loadingElement.classList.remove('hidden');
+        contentElement.classList.add('hidden');
+        errorElement.classList.add('hidden');
+        
+        fetch(`/api/insights/${notebookId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayAIInsights(data);
+                    loadingElement.classList.add('hidden');
+                    contentElement.classList.remove('hidden');
+                } else {
+                    showInsightsError(data.error || '不明なエラー');
+                }
+            })
+            .catch(error => {
+                console.error('AI洞察読み込みエラー:', error);
+                showInsightsError('ネットワークエラー');
+            });
+    }
 
-function loadAIInsights() {
-    const notebookId = {{ notebook.pk }};  // UUIDではなく数値IDとして取得
-    
-    fetch(`/api/insights/${notebookId}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayAIInsights(data);
-            } else {
-                showInsightsError(data.error || '不明なエラー');
-            }
-        })
-        .catch(error => {
-            console.error('AI洞察読み込みエラー:', error);
-            showInsightsError('ネットワークエラー');
+    function displayAIInsights(insights) {
+        // 自動分類結果表示
+        displayClassificationResults(insights.categorization);
+        
+        // 関連コンテンツ表示
+        displayRelatedContent(insights.related_content);
+        
+        // 改善提案表示
+        displayImprovementSuggestions(insights.improvement_suggestions);
+        
+        // 推奨アクション表示
+        displayRecommendedActions(insights.categorization.recommended_actions);
+        
+        // アイコン再初期化
+        lucide.createIcons();
+    }
+
+    function displayClassificationResults(categorization) {
+        const strategyLabels = {
+            'dividend_income': '配当収入',
+            'growth_investing': '成長投資',
+            'value_investing': 'バリュー投資',
+            'short_term_trading': '短期取引',
+            'long_term_holding': '長期保有',
+            'diversified': '分散投資'
+        };
+        
+        const depthLabels = {
+            'detailed': '詳細',
+            'moderate': '中程度',
+            'basic': '基本'
+        };
+        
+        const typeLabels = {
+            'earnings_analysis': '決算分析',
+            'news_analysis': 'ニュース分析',
+            'technical_analysis': 'テクニカル分析',
+            'fundamental_analysis': 'ファンダメンタル分析',
+            'calculation': '計算',
+            'risk_analysis': 'リスク分析',
+            'general_memo': '一般メモ'
+        };
+        
+        document.getElementById('investment-strategy').textContent = 
+            strategyLabels[categorization.investment_strategy] || categorization.investment_strategy;
+        document.getElementById('analysis-depth').textContent = 
+            depthLabels[categorization.analysis_depth] || categorization.analysis_depth;
+        document.getElementById('content-type').textContent = 
+            typeLabels[categorization.content_type] || categorization.content_type;
+        document.getElementById('classification-confidence').textContent = 
+            Math.round(categorization.classification_confidence * 100) + '%';
+    }
+
+    function displayRelatedContent(relatedContent) {
+        const container = document.getElementById('related-content-list');
+        
+        if (relatedContent.length === 0) {
+            container.innerHTML = '<div class="text-sm text-gray-500">関連するノートが見つかりませんでした</div>';
+            return;
+        }
+        
+        container.innerHTML = relatedContent.map(item => `
+            <a href="${item.url}" class="block p-2 border rounded hover:bg-blue-50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm truncate">${item.title}</div>
+                        <div class="text-xs text-gray-600 truncate">${item.subtitle}</div>
+                        <div class="text-xs text-blue-600 mt-1">${item.matching_aspects.join(', ')}</div>
+                    </div>
+                    <div class="text-xs text-gray-500 ml-2 flex-shrink-0">
+                        類似度: ${Math.round(item.similarity_score * 100)}%
+                    </div>
+                </div>
+            </a>
+        `).join('');
+    }
+
+    function displayImprovementSuggestions(suggestions) {
+        const container = document.getElementById('improvement-suggestions-list');
+        
+        if (suggestions.length === 0) {
+            container.innerHTML = '<div class="text-sm text-gray-500">現在、改善提案はありません</div>';
+            return;
+        }
+        
+        const priorityColors = {
+            'high': 'border-red-200 bg-red-50 text-red-800',
+            'medium': 'border-yellow-200 bg-yellow-50 text-yellow-800',
+            'low': 'border-green-200 bg-green-50 text-green-800'
+        };
+        
+        const priorityLabels = {
+            'high': '重要',
+            'medium': '中程度',
+            'low': '軽微'
+        };
+        
+        container.innerHTML = suggestions.map(suggestion => `
+            <div class="p-2 border rounded ${priorityColors[suggestion.priority] || 'border-gray-200 bg-gray-50'}">
+                <div class="flex items-start justify-between mb-1">
+                    <div class="font-medium text-sm">${suggestion.title}</div>
+                    <span class="text-xs px-2 py-1 rounded ${priorityColors[suggestion.priority] || 'bg-gray-200 text-gray-800'}">
+                        ${priorityLabels[suggestion.priority] || suggestion.priority}
+                    </span>
+                </div>
+                <div class="text-xs">${suggestion.description}</div>
+            </div>
+        `).join('');
+    }
+
+    function displayRecommendedActions(actions) {
+        const container = document.getElementById('recommended-actions-list');
+        
+        if (!actions || actions.length === 0) {
+            container.innerHTML = '<div class="text-sm text-gray-500">推奨アクションはありません</div>';
+            return;
+        }
+        
+        container.innerHTML = actions.map(action => `
+            <div class="flex items-start gap-2">
+                <i data-lucide="arrow-right" class="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0"></i>
+                <span>${action}</span>
+            </div>
+        `).join('');
+    }
+
+    function showInsightsError(error) {
+        document.getElementById('ai-insights-loading').classList.add('hidden');
+        document.getElementById('ai-insights-content').classList.add('hidden');
+        const errorElement = document.getElementById('ai-insights-error');
+        errorElement.classList.remove('hidden');
+        errorElement.querySelector('div').textContent = error;
+    }
+
+    // その他メニューの制御
+    function toggleMoreMenu() {
+        const menu = document.getElementById('more-menu');
+        const button = document.getElementById('more-menu-button');
+        const isHidden = menu.classList.contains('hidden');
+        
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            button.setAttribute('aria-expanded', 'true');
+        } else {
+            menu.classList.add('hidden');
+            button.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    // エントリーメニューの制御
+    function toggleEntryMenu(entryId) {
+        const menu = document.getElementById(`entry-menu-${entryId}`);
+        // すべてのメニューを閉じる
+        document.querySelectorAll('.entry-menu').forEach(m => {
+            if (m !== menu) m.classList.add('hidden');
         });
-}
-
-function displayAIInsights(insights) {
-    // ローディング非表示、コンテンツ表示
-    document.getElementById('ai-insights-loading').classList.add('hidden');
-    document.getElementById('ai-insights-content').classList.remove('hidden');
-    
-    // 自動分類結果表示
-    displayClassificationResults(insights.categorization);
-    
-    // 関連コンテンツ表示
-    displayRelatedContent(insights.related_content);
-    
-    // 改善提案表示
-    displayImprovementSuggestions(insights.improvement_suggestions);
-    
-    // 推奨アクション表示
-    displayRecommendedActions(insights.categorization.recommended_actions);
-    
-    // アイコン再初期化
-    lucide.createIcons();
-}
-
-function displayClassificationResults(categorization) {
-    const strategyLabels = {
-        'dividend_income': '配当収入',
-        'growth_investing': '成長投資',
-        'value_investing': 'バリュー投資',
-        'short_term_trading': '短期取引',
-        'long_term_holding': '長期保有',
-        'diversified': '分散投資'
-    };
-    
-    const depthLabels = {
-        'detailed': '詳細',
-        'moderate': '中程度',
-        'basic': '基本'
-    };
-    
-    const typeLabels = {
-        'earnings_analysis': '決算分析',
-        'news_analysis': 'ニュース分析',
-        'technical_analysis': 'テクニカル分析',
-        'fundamental_analysis': 'ファンダメンタル分析',
-        'calculation': '計算',
-        'risk_analysis': 'リスク分析',
-        'general_memo': '一般メモ'
-    };
-    
-    document.getElementById('investment-strategy').textContent = 
-        strategyLabels[categorization.investment_strategy] || categorization.investment_strategy;
-    document.getElementById('analysis-depth').textContent = 
-        depthLabels[categorization.analysis_depth] || categorization.analysis_depth;
-    document.getElementById('content-type').textContent = 
-        typeLabels[categorization.content_type] || categorization.content_type;
-    document.getElementById('classification-confidence').textContent = 
-        Math.round(categorization.classification_confidence * 100) + '%';
-}
-
-function displayRelatedContent(relatedContent) {
-    const container = document.getElementById('related-content-list');
-    
-    if (relatedContent.length === 0) {
-        container.innerHTML = '<div class="text-sm text-gray-500">関連するノートが見つかりませんでした</div>';
-        return;
+        // 対象メニューをトグル
+        menu.classList.toggle('hidden');
     }
-    
-    container.innerHTML = relatedContent.map(item => `
-        <a href="${item.url}" class="block p-2 border rounded hover:bg-blue-50 transition-colors">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <div class="font-medium text-sm">${item.title}</div>
-                    <div class="text-xs text-gray-600 mb-1">${item.subtitle}</div>
-                    <div class="text-xs text-blue-600">${item.matching_aspects.join(', ')}</div>
-                </div>
-                <div class="text-xs text-gray-500 ml-2">
-                    類似度: ${Math.round(item.similarity_score * 100)}%
-                </div>
-            </div>
-        </a>
-    `).join('');
-}
 
-function displayImprovementSuggestions(suggestions) {
-    const container = document.getElementById('improvement-suggestions-list');
-    
-    if (suggestions.length === 0) {
-        container.innerHTML = '<div class="text-sm text-gray-500">現在、改善提案はありません</div>';
-        return;
+    // エントリーフィルター
+    function filterEntries(type) {
+        const entries = document.querySelectorAll('[data-entry-type]');
+        entries.forEach(entry => {
+            if (type === '' || entry.dataset.entryType === type) {
+                entry.style.display = 'block';
+            } else {
+                entry.style.display = 'none';
+            }
+        });
     }
-    
-    const priorityColors = {
-        'high': 'border-red-200 bg-red-50 text-red-800',
-        'medium': 'border-yellow-200 bg-yellow-50 text-yellow-800',
-        'low': 'border-green-200 bg-green-50 text-green-800'
-    };
-    
-    const priorityLabels = {
-        'high': '重要',
-        'medium': '中程度',
-        'low': '軽微'
-    };
-    
-    container.innerHTML = suggestions.map(suggestion => `
-        <div class="p-2 border rounded ${priorityColors[suggestion.priority] || 'border-gray-200 bg-gray-50'}">
-            <div class="flex items-start justify-between mb-1">
-                <div class="font-medium text-sm">${suggestion.title}</div>
-                <span class="text-xs px-2 py-1 rounded ${priorityColors[suggestion.priority] || 'bg-gray-200 text-gray-800'}">
-                    ${priorityLabels[suggestion.priority] || suggestion.priority}
-                </span>
-            </div>
-            <div class="text-xs">${suggestion.description}</div>
-        </div>
-    `).join('');
-}
 
-function displayRecommendedActions(actions) {
-    const container = document.getElementById('recommended-actions-list');
-    
-    if (!actions || actions.length === 0) {
-        container.innerHTML = '<div class="text-sm text-gray-500">推奨アクションはありません</div>';
-        return;
+    // クイック計算の更新
+    function updateCalculations() {
+        const investmentAmount = parseFloat(document.getElementById('investment-amount').value) || 0;
+        const currentPrice = {{ notebook.current_price|default:"0" }};
+        
+        if (investmentAmount > 0 && currentPrice > 0) {
+            const shares = Math.floor(investmentAmount / currentPrice);
+            const dividendRate = 0.088; // 8.8%（仮定）
+            const annualDividend = investmentAmount * dividendRate;
+            
+            document.getElementById('stock-count').textContent = `${shares}株`;
+            document.getElementById('dividend-estimate').textContent = `¥${Math.round(annualDividend).toLocaleString()}`;
+            document.getElementById('yield-rate').textContent = `${(dividendRate * 100).toFixed(1)}%`;
+        } else {
+            document.getElementById('stock-count').textContent = '-';
+            document.getElementById('dividend-estimate').textContent = '-';
+            document.getElementById('yield-rate').textContent = '-';
+        }
     }
-    
-    container.innerHTML = actions.map(action => `
-        <div class="flex items-start gap-2 text-sm">
-            <i data-lucide="arrow-right" class="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0"></i>
-            <span>${action}</span>
-        </div>
-    `).join('');
-}
 
-function showInsightsError(error) {
-    document.getElementById('ai-insights-loading').innerHTML = `
-        <div class="text-center py-4 text-red-600">
-            <i data-lucide="alert-circle" class="w-5 h-5 mx-auto mb-2"></i>
-            <div>AI洞察の読み込みに失敗しました</div>
-            <div class="text-sm mt-1">${error}</div>
-            <button onclick="loadAIInsights()" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                再試行
-            </button>
-        </div>
-    `;
-    lucide.createIcons();
-}
+    // 外部クリックでメニューを閉じる
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#more-menu, #more-menu-button')) {
+            document.getElementById('more-menu').classList.add('hidden');
+            document.getElementById('more-menu-button').setAttribute('aria-expanded', 'false');
+        }
+        
+        // エントリーメニューも閉じる
+        if (!e.target.closest('.entry-menu, [onclick*="toggleEntryMenu"]')) {
+            document.querySelectorAll('.entry-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    });
+
+    // ESCキーでメニューを閉じる
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('more-menu').classList.add('hidden');
+            document.getElementById('more-menu-button').setAttribute('aria-expanded', 'false');
+            document.querySelectorAll('.entry-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    });
+
+    // DOMロード後に実行
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAIInsights();
+        updateCalculations();
+    });
 </script>
 {% endblock %}

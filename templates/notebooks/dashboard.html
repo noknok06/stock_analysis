@@ -1,268 +1,378 @@
-<!-- templates/notebooks/dashboard.html -->
+<!-- templates/notebooks/dashboard.html (改良版) -->
 {% extends 'base.html' %}
 
 {% block title %}ダッシュボード - 株式分析記録アプリ{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto p-4 space-y-6">
-    <!-- ヘッダー -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">株式分析ダッシュボード</h1>
-            <p class="text-gray-600">投資判断プロセスを記録・追跡し、投資スキルを向上させる</p>
+<div class="dashboard max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-6">
+    <!-- ダッシュボードヘッダー -->
+    <header class="dashboard__header">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="dashboard__header-content">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+                    <span role="img" aria-label="ダッシュボード">📊</span>
+                    株式分析ダッシュボード
+                </h1>
+                <p class="text-sm md:text-base text-gray-600 mt-1">
+                    投資判断プロセスを記録・追跡し、投資スキルを向上させる
+                </p>
+            </div>
+            <div class="dashboard__header-actions flex items-center gap-2">
+                <button class="app-btn app-btn--secondary app-btn--sm touch-friendly" aria-label="通知">
+                    <i data-lucide="bell" class="w-4 h-4" aria-hidden="true"></i>
+                    <span class="hidden sm:inline">通知</span>
+                </button>
+                <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary app-btn--sm">
+                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                    <span class="hidden xs:inline">新規ノート</span>
+                    <span class="xs:hidden">新規</span>
+                </a>
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-            <button class="tw-btn-outline tw-btn-sm">
-                <i data-lucide="bell" class="w-4 h-4"></i>
-                通知
-            </button>
-            <a href="{% url 'notebook_create' %}" class="tw-btn-primary tw-btn-sm">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                新規ノート
-            </a>
-        </div>
-    </div>
+    </header>
 
-    <!-- インライン検索バー -->
+    <!-- インライン検索バー（Hub & Spoke の中心機能） -->
     {% if user.is_authenticated %}
-    <div class="tw-card">
-        <div class="tw-card-content p-4">
-            <div class="relative">
-                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
-                <input 
-                    type="text" 
-                    id="inline-search"
-                    placeholder="銘柄名、タグ、記録内容を検索..." 
-                    class="tw-input pl-10 text-lg"
-                />
-                <!-- AI検索切り替え -->
-                <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                    <label class="flex items-center gap-1 text-sm text-gray-600">
-                        <input type="checkbox" id="semantic-search-toggle" class="rounded">
-                        <span>AI検索</span>
-                    </label>
-                </div>
-                <!-- 検索結果 -->
-                <div id="search-results" class="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto hidden"></div>
-                <!-- セマンティック検索結果 -->
-                <div id="semantic-results" class="absolute top-full left-0 right-0 mt-1 bg-blue-50 border border-blue-200 rounded-lg shadow-lg z-10 max-h-80 overflow-y-auto hidden">
-                    <div class="p-3 border-b border-blue-200 bg-blue-100">
-                        <div class="flex items-center gap-2 text-blue-800">
-                            <i data-lucide="sparkles" class="w-4 h-4"></i>
-                            <span class="font-medium">AI検索結果</span>
+    <section class="dashboard__search" aria-labelledby="search-heading">
+        <h2 id="search-heading" class="sr-only">検索</h2>
+        <div class="app-card">
+            <div class="app-card__content p-3 md:p-4">
+                <div class="search-container relative">
+                    <label for="inline-search" class="sr-only">銘柄名、タグ、記録内容を検索</label>
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" aria-hidden="true"></i>
+                        <input 
+                            type="text" 
+                            id="inline-search"
+                            placeholder="銘柄名、タグ、記録内容を検索..." 
+                            class="app-input pl-10 md:pl-12 text-base md:text-lg h-12 md:h-14"
+                            autocomplete="off"
+                            role="combobox"
+                            aria-expanded="false"
+                            aria-owns="search-results"
+                        />
+                        
+                        <!-- 検索モード切り替え -->
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                            <label class="search-toggle flex items-center gap-1 text-xs md:text-sm text-gray-600">
+                                <input type="checkbox" id="semantic-search-toggle" class="rounded" aria-describedby="search-mode-help">
+                                <span>AI検索</span>
+                            </label>
+                        </div>
+                        
+                        <!-- 検索ヘルプ -->
+                        <div id="search-mode-help" class="sr-only">
+                            AI検索を有効にすると、意味的に関連するコンテンツも検索されます
                         </div>
                     </div>
-                    <div id="semantic-results-content"></div>
+                    
+                    <!-- 基本検索結果 -->
+                    <div id="search-results" 
+                         class="search-results absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto hidden"
+                         role="listbox"
+                         aria-label="検索結果">
+                    </div>
+                    
+                    <!-- AI検索結果 -->
+                    <div id="semantic-results" 
+                         class="search-results search-results--ai absolute top-full left-0 right-0 mt-2 bg-blue-50 border border-blue-200 rounded-lg shadow-lg z-20 max-h-80 overflow-y-auto hidden"
+                         role="listbox"
+                         aria-label="AI検索結果">
+                        <div class="search-results__header p-3 border-b border-blue-200 bg-blue-100">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i data-lucide="sparkles" class="w-4 h-4" aria-hidden="true"></i>
+                                <span class="font-medium text-sm md:text-base">AI検索結果</span>
+                            </div>
+                        </div>
+                        <div id="semantic-results-content" role="group" aria-label="AI検索結果一覧"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
     {% endif %}
 
     <!-- 統計サマリー -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="tw-card">
-            <div class="tw-card-content p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">アクティブノート</p>
-                        <p class="text-2xl font-bold">{{ stats.active_notebooks }}</p>
-                        <p class="text-xs text-green-600">+{{ stats.total_notebooks|add:"-5" }}</p>
+    <section class="dashboard__stats" aria-labelledby="stats-heading">
+        <h2 id="stats-heading" class="sr-only">統計情報</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div class="stats-card app-card">
+                <div class="app-card__content p-3 md:p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="stats-card__content">
+                            <p class="text-xs md:text-sm text-gray-600">アクティブノート</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900">{{ stats.active_notebooks }}</p>
+                            <p class="text-xs text-green-600 mt-1">+{{ stats.total_notebooks|add:"-5" }}</p>
+                        </div>
+                        <i data-lucide="book-open" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
                     </div>
-                    <i data-lucide="book-open" class="w-8 h-8 text-blue-600"></i>
+                </div>
+            </div>
+            
+            <div class="stats-card app-card">
+                <div class="app-card__content p-3 md:p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="stats-card__content">
+                            <p class="text-xs md:text-sm text-gray-600">今月の記録</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900">{{ stats.monthly_entries }}</p>
+                            <p class="text-xs text-green-600 mt-1">+5</p>
+                        </div>
+                        <i data-lucide="clock" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-card app-card">
+                <div class="app-card__content p-3 md:p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="stats-card__content">
+                            <p class="text-xs md:text-sm text-gray-600">総エントリー</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900">{{ stats.total_entries }}</p>
+                            <p class="text-xs text-green-600 mt-1">+12</p>
+                        </div>
+                        <i data-lucide="bar-chart-3" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-card app-card">
+                <div class="app-card__content p-3 md:p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="stats-card__content">
+                            <p class="text-xs md:text-sm text-gray-600">目標達成率</p>
+                            <p class="text-xl md:text-2xl font-bold text-gray-900">75%</p>
+                            <p class="text-xs text-green-600 mt-1">+3%</p>
+                        </div>
+                        <i data-lucide="target" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="tw-card">
-            <div class="tw-card-content p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">今月の記録</p>
-                        <p class="text-2xl font-bold">{{ stats.monthly_entries }}</p>
-                        <p class="text-xs text-green-600">+5</p>
-                    </div>
-                    <i data-lucide="clock" class="w-8 h-8 text-blue-600"></i>
-                </div>
-            </div>
-        </div>
-        <div class="tw-card">
-            <div class="tw-card-content p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">総エントリー</p>
-                        <p class="text-2xl font-bold">{{ stats.total_entries }}</p>
-                        <p class="text-xs text-green-600">+12</p>
-                    </div>
-                    <i data-lucide="bar-chart-3" class="w-8 h-8 text-blue-600"></i>
-                </div>
-            </div>
-        </div>
-        <div class="tw-card">
-            <div class="tw-card-content p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">目標達成率</p>
-                        <p class="text-2xl font-bold">75%</p>
-                        <p class="text-xs text-green-600">+3%</p>
-                    </div>
-                    <i data-lucide="target" class="w-8 h-8 text-blue-600"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- メインコンテンツ -->
-        <div class="lg:col-span-2 space-y-6">
+    <!-- メインコンテンツエリア -->
+    <div class="dashboard__content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+        <!-- メインコンテンツ（左側・中央） -->
+        <div class="dashboard__main lg:col-span-2 space-y-4 md:space-y-6">
             <!-- クイックアクション -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h2 class="tw-card-title">クイックアクション</h2>
-                </div>
-                <div class="tw-card-content">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <a href="{% url 'notebook_create' %}" class="tw-btn-outline h-20 flex-col">
-                            <i data-lucide="plus" class="w-6 h-6 mb-2"></i>
-                            新規ノート
-                        </a>
-                        <a href="{% url 'calculator' %}" class="tw-btn-outline h-20 flex-col">
-                            <i data-lucide="calculator" class="w-6 h-6 mb-2"></i>
-                            計算ツール
-                        </a>
-                        <button class="tw-btn-outline h-20 flex-col">
-                            <i data-lucide="trending-up" class="w-6 h-6 mb-2"></i>
-                            株価チェック
-                        </button>
-                        <button class="tw-btn-outline h-20 flex-col">
-                            <i data-lucide="users" class="w-6 h-6 mb-2"></i>
-                            コミュニティ
-                        </button>
+            <section class="dashboard__quick-actions" aria-labelledby="quick-actions-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="quick-actions-heading" class="app-card__title">クイックアクション</h2>
+                    </div>
+                    <div class="app-card__content">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <a href="{% url 'notebook_create' %}" 
+                               class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                               aria-describedby="new-notebook-desc">
+                                <i data-lucide="plus" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
+                                <span class="text-xs md:text-sm">新規ノート</span>
+                            </a>
+                            <div id="new-notebook-desc" class="sr-only">新しい投資ノートを作成</div>
+                            
+                            <a href="{% url 'calculator' %}" 
+                               class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                               aria-describedby="calculator-desc">
+                                <i data-lucide="calculator" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
+                                <span class="text-xs md:text-sm">計算ツール</span>
+                            </a>
+                            <div id="calculator-desc" class="sr-only">配当利回りや投資金額を計算</div>
+                            
+                            <button class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                                    aria-describedby="stock-check-desc">
+                                <i data-lucide="trending-up" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
+                                <span class="text-xs md:text-sm">株価チェック</span>
+                            </button>
+                            <div id="stock-check-desc" class="sr-only">追跡中銘柄の株価を確認</div>
+                            
+                            <button class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                                    aria-describedby="community-desc">
+                                <i data-lucide="users" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
+                                <span class="text-xs md:text-sm">コミュニティ</span>
+                            </button>
+                            <div id="community-desc" class="sr-only">他の投資家と知見を共有</div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- 最近のノート -->
             {% if user.is_authenticated %}
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h2 class="tw-card-title">最近の記録</h2>
-                </div>
-                <div class="tw-card-content">
-                    {% if recent_notebooks %}
-                        <div class="space-y-4">
-                            {% for notebook in recent_notebooks %}
-                            <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" data-notebook-id="{{ notebook.pk }}">
-                                <a href="{% url 'notebook_detail' notebook.pk %}" class="block">
-                                    <div class="flex items-start justify-between">
-                                        <div class="flex-1">
-                                            <h3 class="font-semibold text-lg">{{ notebook.title }}</h3>
-                                            <p class="text-gray-600 text-sm">{{ notebook.subtitle }}</p>
-                                            <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+            <section class="dashboard__recent-notes" aria-labelledby="recent-notes-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="recent-notes-heading" class="app-card__title">最近の記録</h2>
+                    </div>
+                    <div class="app-card__content">
+                        {% if recent_notebooks %}
+                            <div class="space-y-3 md:space-y-4">
+                                {% for notebook in recent_notebooks %}
+                                <article class="notebook-card border rounded-lg p-3 md:p-4 hover:bg-gray-50 cursor-pointer transition-colors" 
+                                         data-notebook-id="{{ notebook.pk }}"
+                                         tabindex="0"
+                                         role="link"
+                                         aria-labelledby="notebook-{{ notebook.pk }}-title"
+                                         onclick="window.location.href='{% url 'notebook_detail' notebook.pk %}'"
+                                         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{% url 'notebook_detail' notebook.pk %}'}">
+                                    
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="notebook-card__content flex-1 min-w-0">
+                                            <h3 id="notebook-{{ notebook.pk }}-title" class="font-semibold text-base md:text-lg text-gray-900 truncate">
+                                                {{ notebook.title }}
+                                            </h3>
+                                            {% if notebook.subtitle %}
+                                                <p class="text-sm md:text-base text-gray-600 mt-1 line-clamp-2">{{ notebook.subtitle }}</p>
+                                            {% endif %}
+                                            
+                                            <div class="notebook-card__meta flex flex-wrap items-center gap-2 md:gap-4 mt-2 text-xs md:text-sm text-gray-500">
                                                 {% if notebook.current_price %}
-                                                    <span>現在価格: ¥{{ notebook.current_price|floatformat:0 }}</span>
+                                                    <span class="flex items-center gap-1">
+                                                        <i data-lucide="yen-sign" class="w-3 h-3" aria-hidden="true"></i>
+                                                        現在価格: ¥{{ notebook.current_price|floatformat:0 }}
+                                                    </span>
                                                 {% endif %}
                                                 {% if notebook.target_price %}
-                                                    <span>目標価格: ¥{{ notebook.target_price|floatformat:0 }}</span>
+                                                    <span class="flex items-center gap-1">
+                                                        <i data-lucide="target" class="w-3 h-3" aria-hidden="true"></i>
+                                                        目標価格: ¥{{ notebook.target_price|floatformat:0 }}
+                                                    </span>
                                                 {% endif %}
-                                                <span>{{ notebook.entry_count }}件の記録</span>
+                                                <span class="flex items-center gap-1">
+                                                    <i data-lucide="file-text" class="w-3 h-3" aria-hidden="true"></i>
+                                                    {{ notebook.entry_count }}件の記録
+                                                </span>
                                             </div>
-                                            <div class="flex flex-wrap gap-1 mt-2">
-                                                
+                                            
+                                            <!-- タグ表示エリア -->
+                                            <div class="notebook-card__tags flex flex-wrap gap-1 mt-2">
+                                                <!-- タグがここに動的に追加される -->
                                             </div>
                                         </div>
-                                        <span class="text-xs text-gray-500">{{ notebook.updated_at|timesince }}前</span>
+                                        
+                                        <div class="notebook-card__actions flex flex-col items-end gap-2">
+                                            <time class="text-xs text-gray-500" datetime="{{ notebook.updated_at|date:'c' }}">
+                                                {{ notebook.updated_at|timesince }}前
+                                            </time>
+                                            <div class="flex gap-1">
+                                                <a href="{% url 'notebook_edit' notebook.pk %}" 
+                                                   class="app-btn app-btn--ghost app-btn--sm p-1 touch-friendly"
+                                                   aria-label="{{ notebook.title }}を編集"
+                                                   onclick="event.stopPropagation()">
+                                                    <i data-lucide="edit" class="w-4 h-4" aria-hidden="true"></i>
+                                                </a>
+                                                <a href="{% url 'entry_create' notebook.pk %}" 
+                                                   class="app-btn app-btn--ghost app-btn--sm p-1 touch-friendly"
+                                                   aria-label="{{ notebook.title }}に記録を追加"
+                                                   onclick="event.stopPropagation()">
+                                                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
+                                </article>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="mt-4">
+                                <a href="{% url 'notebook_list' %}" class="app-btn app-btn--secondary w-full">
+                                    すべてのノートを見る
+                                    <i data-lucide="arrow-right" class="w-4 h-4 ml-2" aria-hidden="true"></i>
                                 </a>
                             </div>
-                            {% endfor %}
-                        </div>
-                        <div class="mt-4">
-                            <a href="{% url 'notebook_list' %}" class="tw-btn-outline w-full">
-                                すべてのノートを見る
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-8 text-gray-500">
-                            <i data-lucide="book-open" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
-                            <p>まだノートがありません</p>
-                            <p class="text-sm">最初のノートを作成して分析を始めましょう</p>
-                            <a href="{% url 'notebook_create' %}" class="tw-btn-primary mt-4">
-                                <i data-lucide="plus" class="w-4 h-4"></i>
-                                最初のノートを作成
-                            </a>
-                        </div>
-                    {% endif %}
+                        {% else %}
+                            <div class="empty-state text-center py-8 md:py-12">
+                                <i data-lucide="book-open" class="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-300" aria-hidden="true"></i>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">まだノートがありません</h3>
+                                <p class="text-sm md:text-base text-gray-600 mb-4">最初のノートを作成して分析を始めましょう</p>
+                                <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary">
+                                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                                    最初のノートを作成
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
+            </section>
             {% endif %}
         </div>
 
         <!-- サイドバー -->
-        <div class="space-y-6">
+        <aside class="dashboard__sidebar space-y-4 md:space-y-6">
             <!-- 市場データ -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h2 class="tw-card-title">市場サマリー</h2>
-                </div>
-                <div class="tw-card-content">
-                    <div class="space-y-3">
-                        {% for item in market_data %}
-                        <div class="flex items-center justify-between">
-                            <span class="font-medium">{{ item.name }}</span>
-                            <div class="text-right">
-                                <div class="font-semibold">{{ item.value }}</div>
-                                <div class="text-sm {% if '+' in item.change %}text-green-600{% else %}text-red-600{% endif %}">
-                                    {{ item.change }} ({{ item.change_percent }})
+            <section class="market-summary" aria-labelledby="market-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="market-heading" class="app-card__title">市場サマリー</h2>
+                    </div>
+                    <div class="app-card__content">
+                        <div class="space-y-3">
+                            {% for item in market_data %}
+                            <div class="market-item flex items-center justify-between py-2 border-b last:border-b-0">
+                                <span class="font-medium text-sm md:text-base">{{ item.name }}</span>
+                                <div class="text-right">
+                                    <div class="font-semibold text-sm md:text-base">{{ item.value }}</div>
+                                    <div class="text-xs md:text-sm {% if '+' in item.change %}text-green-600{% else %}text-red-600{% endif %}">
+                                        {{ item.change }} ({{ item.change_percent }})
+                                    </div>
                                 </div>
                             </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- 人気タグ -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h2 class="tw-card-title">人気タグ</h2>
-                </div>
-                <div class="tw-card-content">
-                    <div class="flex flex-wrap gap-2">
-                        {% for tag in popular_tags %}
-                            <span class="tw-badge-outline" onclick="setSearchQuery('#{{ tag.name }}')">
-                                #{{ tag.name }}
-                            </span>
-                        {% endfor %}
+            <section class="popular-tags" aria-labelledby="tags-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="tags-heading" class="app-card__title">人気タグ</h2>
+                    </div>
+                    <div class="app-card__content">
+                        <div class="flex flex-wrap gap-2">
+                            {% for tag in popular_tags %}
+                                <button class="app-badge app-badge--outline touch-friendly" 
+                                        onclick="setSearchQuery('#{{ tag.name }}')"
+                                        aria-label="{{ tag.name }}タグで検索">
+                                    #{{ tag.name }}
+                                </button>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- コミュニティ活動 -->
-            <div class="tw-card">
-                <div class="tw-card-header">
-                    <h2 class="tw-card-title">コミュニティ</h2>
-                </div>
-                <div class="tw-card-content">
-                    <div class="space-y-3">
-                        <div class="text-sm">
-                            <div class="font-medium">話題の銘柄</div>
-                            <div class="text-gray-600">トヨタ自動車の決算分析が注目されています</div>
+            <section class="community-activity" aria-labelledby="community-heading">
+                <div class="app-card">
+                    <div class="app-card__header">
+                        <h2 id="community-heading" class="app-card__title">コミュニティ</h2>
+                    </div>
+                    <div class="app-card__content">
+                        <div class="space-y-3">
+                            <article class="community-item">
+                                <h3 class="font-medium text-sm md:text-base">話題の銘柄</h3>
+                                <p class="text-xs md:text-sm text-gray-600">トヨタ自動車の決算分析が注目されています</p>
+                            </article>
+                            <article class="community-item">
+                                <h3 class="font-medium text-sm md:text-base">人気の投稿</h3>
+                                <p class="text-xs md:text-sm text-gray-600">高配当株の選び方について</p>
+                            </article>
+                            <button class="app-btn app-btn--secondary w-full app-btn--sm">
+                                コミュニティを見る
+                                <i data-lucide="external-link" class="w-4 h-4 ml-2" aria-hidden="true"></i>
+                            </button>
                         </div>
-                        <div class="text-sm">
-                            <div class="font-medium">人気の投稿</div>
-                            <div class="text-gray-600">高配当株の選び方について</div>
-                        </div>
-                        <button class="tw-btn-outline w-full tw-btn-sm">
-                            コミュニティを見る
-                        </button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        </aside>
     </div>
 </div>
 
+<!-- ダッシュボード専用JavaScript -->
 <script>
+    // タグから検索実行
     function setSearchQuery(tag) {
         const searchInput = document.getElementById('inline-search');
         if (searchInput) {
@@ -281,18 +391,18 @@
         let searchTimeout;
 
         if (searchInput && searchResults) {
+            // 検索入力イベント
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
                 const query = this.value.trim();
                 
                 if (query.length < 2) {
-                    searchResults.classList.add('hidden');
-                    semanticResults.classList.add('hidden');
+                    hideSearchResults();
                     return;
                 }
                 
                 searchTimeout = setTimeout(() => {
-                    if (semanticToggle.checked) {
+                    if (semanticToggle && semanticToggle.checked) {
                         performSemanticSearch(query);
                     } else {
                         performBasicSearch(query);
@@ -301,75 +411,111 @@
             });
 
             // 検索モード切り替え
-            semanticToggle.addEventListener('change', function() {
-                const query = searchInput.value.trim();
-                if (query.length >= 2) {
-                    if (this.checked) {
-                        performSemanticSearch(query);
-                    } else {
-                        performBasicSearch(query);
+            if (semanticToggle) {
+                semanticToggle.addEventListener('change', function() {
+                    const query = searchInput.value.trim();
+                    if (query.length >= 2) {
+                        if (this.checked) {
+                            performSemanticSearch(query);
+                        } else {
+                            performBasicSearch(query);
+                        }
                     }
+                });
+            }
+
+            // キーボードナビゲーション
+            searchInput.addEventListener('keydown', function(e) {
+                const activeResults = getActiveSearchResults();
+                if (!activeResults || activeResults.classList.contains('hidden')) return;
+
+                const items = activeResults.querySelectorAll('[role="option"], a');
+                let currentIndex = Array.from(items).findIndex(item => item.classList.contains('focused'));
+
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        currentIndex = Math.min(currentIndex + 1, items.length - 1);
+                        updateFocus(items, currentIndex);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        currentIndex = Math.max(currentIndex - 1, -1);
+                        updateFocus(items, currentIndex);
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (currentIndex >= 0 && items[currentIndex]) {
+                            items[currentIndex].click();
+                        }
+                        break;
+                    case 'Escape':
+                        hideSearchResults();
+                        break;
                 }
             });
             
-            // 外部クリックで検索結果を閉じる
+            // 外部クリックで結果を閉じる
             document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && 
-                    !searchResults.contains(e.target) && 
-                    !semanticResults.contains(e.target)) {
-                    searchResults.classList.add('hidden');
-                    semanticResults.classList.add('hidden');
+                if (!isSearchRelated(e.target)) {
+                    hideSearchResults();
                 }
             });
         }
     }
 
-    // 基本検索
+    // 基本検索実行
     function performBasicSearch(query) {
         fetch(`/api/search/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
                 displayBasicSearchResults(data.results);
-                document.getElementById('semantic-results').classList.add('hidden');
+                hideSemanticResults();
             })
             .catch(error => {
                 console.error('検索エラー:', error);
+                showSearchError('検索中にエラーが発生しました');
             });
     }
 
-    // セマンティック検索
+    // セマンティック検索実行
     function performSemanticSearch(query) {
         fetch(`/api/search/semantic/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     displaySemanticSearchResults(data.results, query);
-                    document.getElementById('search-results').classList.add('hidden');
+                    hideBasicResults();
                 } else {
                     console.error('セマンティック検索エラー:', data.error);
-                    performBasicSearch(query); // フォールバック
+                    performBasicSearch(query);
                 }
             })
             .catch(error => {
                 console.error('セマンティック検索エラー:', error);
-                performBasicSearch(query); // フォールバック
+                performBasicSearch(query);
             });
     }
 
     // 基本検索結果表示
     function displayBasicSearchResults(results) {
         const searchResults = document.getElementById('search-results');
+        const searchInput = document.getElementById('inline-search');
         
         if (results.length === 0) {
-            searchResults.innerHTML = '<div class="p-4 text-center text-gray-500">検索結果がありません</div>';
+            searchResults.innerHTML = '<div class="p-4 text-center text-gray-500" role="option">検索結果がありません</div>';
         } else {
-            searchResults.innerHTML = results.map(result => `
-                <a href="${result.url}" class="block p-3 hover:bg-gray-50 border-b last:border-b-0">
-                    <div class="font-semibold">${result.title}</div>
-                    <div class="text-sm text-gray-600">${result.subtitle}</div>
+            searchResults.innerHTML = results.map((result, index) => `
+                <a href="${result.url}" 
+                   class="block p-3 hover:bg-gray-50 focus:bg-gray-50 border-b last:border-b-0 transition-colors"
+                   role="option"
+                   aria-describedby="result-${index}-desc"
+                   tabindex="-1">
+                    <div class="font-semibold text-sm md:text-base">${result.title}</div>
+                    <div id="result-${index}-desc" class="text-xs md:text-sm text-gray-600">${result.subtitle}</div>
                     <div class="flex gap-1 mt-1">
                         ${result.tags.slice(0, 3).map(tag => 
-                            `<span class="tw-badge-outline text-xs">#${tag}</span>`
+                            `<span class="app-badge app-badge--outline text-xs">#${tag}</span>`
                         ).join('')}
                     </div>
                 </a>
@@ -377,23 +523,29 @@
         }
         
         searchResults.classList.remove('hidden');
+        searchInput.setAttribute('aria-expanded', 'true');
     }
 
     // セマンティック検索結果表示
     function displaySemanticSearchResults(results, query) {
         const semanticResults = document.getElementById('semantic-results');
         const semanticContent = document.getElementById('semantic-results-content');
+        const searchInput = document.getElementById('inline-search');
         
         if (results.length === 0) {
-            semanticContent.innerHTML = '<div class="p-4 text-center text-gray-500">AI検索で関連するコンテンツが見つかりませんでした</div>';
+            semanticContent.innerHTML = '<div class="p-4 text-center text-gray-500" role="option">AI検索で関連するコンテンツが見つかりませんでした</div>';
         } else {
-            semanticContent.innerHTML = results.map(result => `
-                <a href="${result.url}" class="block p-3 hover:bg-blue-100 border-b border-blue-200 last:border-b-0">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="font-semibold text-blue-900">${result.title}</div>
-                            <div class="text-sm text-blue-700 mb-2">${result.subtitle}</div>
-                            <div class="text-xs text-blue-600 bg-white p-2 rounded mb-2">
+            semanticContent.innerHTML = results.map((result, index) => `
+                <a href="${result.url}" 
+                   class="block p-3 hover:bg-blue-100 focus:bg-blue-100 border-b border-blue-200 last:border-b-0 transition-colors"
+                   role="option"
+                   aria-describedby="ai-result-${index}-desc"
+                   tabindex="-1">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm md:text-base text-blue-900">${result.title}</div>
+                            <div class="text-xs md:text-sm text-blue-700 mb-2">${result.subtitle}</div>
+                            <div id="ai-result-${index}-desc" class="text-xs text-blue-600 bg-white p-2 rounded mb-2 line-clamp-2">
                                 ${result.content_preview}
                             </div>
                             <div class="flex gap-1">
@@ -416,11 +568,73 @@
         }
         
         semanticResults.classList.remove('hidden');
+        searchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    // 検索エラー表示
+    function showSearchError(message) {
+        const searchResults = document.getElementById('search-results');
+        searchResults.innerHTML = `
+            <div class="p-4 text-center text-red-600" role="alert">
+                <i data-lucide="alert-circle" class="w-5 h-5 mx-auto mb-2"></i>
+                <div>${message}</div>
+            </div>
+        `;
+        searchResults.classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    // ヘルパー関数
+    function hideSearchResults() {
+        const searchInput = document.getElementById('inline-search');
+        hideBasicResults();
+        hideSemanticResults();
+        searchInput.setAttribute('aria-expanded', 'false');
+    }
+
+    function hideBasicResults() {
+        const searchResults = document.getElementById('search-results');
+        if (searchResults) {
+            searchResults.classList.add('hidden');
+        }
+    }
+
+    function hideSemanticResults() {
+        const semanticResults = document.getElementById('semantic-results');
+        if (semanticResults) {
+            semanticResults.classList.add('hidden');
+        }
+    }
+
+    function getActiveSearchResults() {
+        const basicResults = document.getElementById('search-results');
+        const semanticResults = document.getElementById('semantic-results');
+        
+        if (basicResults && !basicResults.classList.contains('hidden')) {
+            return basicResults;
+        }
+        if (semanticResults && !semanticResults.classList.contains('hidden')) {
+            return semanticResults;
+        }
+        return null;
+    }
+
+    function updateFocus(items, currentIndex) {
+        items.forEach(item => item.classList.remove('focused'));
+        if (currentIndex >= 0 && items[currentIndex]) {
+            items[currentIndex].classList.add('focused');
+            items[currentIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    function isSearchRelated(element) {
+        const searchContainer = element.closest('.search-container');
+        const searchResults = element.closest('#search-results, #semantic-results');
+        return searchContainer || searchResults;
     }
 
     // AI分析結果のリアルタイム表示
     function setupAIInsights() {
-        // ページに表示されているノートブックに対してAI洞察を取得
         const notebookElements = document.querySelectorAll('[data-notebook-id]');
         
         notebookElements.forEach(element => {
@@ -445,41 +659,82 @@
     }
 
     function displayAIInsights(insights, element) {
-        // AI洞察の表示（既存のノートカードに追加）
         const aiIndicator = document.createElement('div');
         aiIndicator.className = 'absolute top-2 right-2 flex items-center gap-1';
         
-        // 分析深度インジケーター
         const depthColor = {
             'detailed': 'text-green-500',
             'moderate': 'text-yellow-500',
             'basic': 'text-gray-500'
-        }[insights.categorization.analysis_depth] || 'text-gray-500';
+        }[insights.categorization?.analysis_depth] || 'text-gray-500';
         
         aiIndicator.innerHTML = `
-            <i data-lucide="brain" class="w-4 h-4 ${depthColor}"></i>
-            <span class="text-xs ${depthColor}">${insights.categorization.analysis_depth}</span>
+            <i data-lucide="brain" class="w-4 h-4 ${depthColor}" aria-hidden="true"></i>
+            <span class="text-xs ${depthColor}" aria-label="AI分析深度: ${insights.categorization?.analysis_depth}">
+                ${insights.categorization?.analysis_depth}
+            </span>
         `;
         
         element.style.position = 'relative';
         element.appendChild(aiIndicator);
         
-        // 関連コンテンツ数の表示
-        if (insights.related_content.length > 0) {
+        if (insights.related_content?.length > 0) {
             const relatedIndicator = document.createElement('div');
             relatedIndicator.className = 'text-xs text-blue-600 mt-1';
-            relatedIndicator.innerHTML = `<i data-lucide="link" class="w-3 h-3 inline"></i> 関連: ${insights.related_content.length}件`;
+            relatedIndicator.innerHTML = `
+                <i data-lucide="link" class="w-3 h-3 inline" aria-hidden="true"></i> 
+                関連: ${insights.related_content.length}件
+            `;
             element.appendChild(relatedIndicator);
         }
         
-        // Lucide icons 再初期化
         lucide.createIcons();
+    }
+
+    // CSS line-clamp のポリフィル（古いブラウザ対応）
+    function setupLineClamp() {
+        if (!CSS.supports('-webkit-line-clamp', '2')) {
+            document.querySelectorAll('.line-clamp-2').forEach(element => {
+                const lineHeight = parseInt(getComputedStyle(element).lineHeight);
+                element.style.height = `${lineHeight * 2}px`;
+                element.style.overflow = 'hidden';
+            });
+        }
+    }
+
+    // パフォーマンス監視
+    function measurePerformance() {
+        if ('performance' in window) {
+            window.addEventListener('load', () => {
+                const loadTime = performance.now();
+                if (loadTime > 3000) {
+                    console.warn('ページの読み込み時間が長いです:', loadTime, 'ms');
+                }
+            });
+        }
     }
 
     // DOMロード後に実行
     document.addEventListener('DOMContentLoaded', function() {
         setupAdvancedSearch();
         setupAIInsights();
+        setupLineClamp();
+        measurePerformance();
     });
+</script>
+
+<!-- パフォーマンス最適化のためのプリロード -->
+<link rel="preload" href="https://unpkg.com/lucide@latest/dist/umd/lucide.js" as="script">
+
+<!-- 構造化データ（SEO・アクセシビリティ向上） -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "株式分析記録アプリ",
+  "description": "投資判断プロセスを記録・追跡し、投資スキルを向上させるアプリケーション",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web Browser"
+}
 </script>
 {% endblock %}

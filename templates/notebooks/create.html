@@ -1,120 +1,617 @@
-<!-- templates/notebooks/create.html -->
+<!-- templates/notebooks/create.html (改良版) -->
 {% extends 'base.html' %}
 
 {% block title %}ノート作成 - 株式分析記録アプリ{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto p-4 space-y-6">
-    <!-- ヘッダー -->
-    <div class="flex items-center gap-4">
-        <a href="{% url 'dashboard' %}" class="tw-btn-outline tw-btn-sm">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            戻る
-        </a>
-        <h1 class="text-2xl font-bold">新規ノート作成</h1>
+<div class="notebook-create max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
+    <!-- プログレスインジケーター -->
+    <div class="progress-indicator mb-6" aria-label="作成ステップ">
+        <div class="flex items-center justify-between max-w-md mx-auto">
+            <div class="progress-step progress-step--active flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full text-sm font-medium">
+                1
+            </div>
+            <div class="progress-line flex-1 h-0.5 bg-gray-200 mx-2"></div>
+            <div class="progress-step flex items-center justify-center w-8 h-8 bg-gray-200 text-gray-500 rounded-full text-sm font-medium">
+                2
+            </div>
+            <div class="progress-line flex-1 h-0.5 bg-gray-200 mx-2"></div>
+            <div class="progress-step flex items-center justify-center w-8 h-8 bg-gray-200 text-gray-500 rounded-full text-sm font-medium">
+                3
+            </div>
+        </div>
+        <div class="text-center mt-2 text-sm text-gray-600">
+            ステップ 1/3: 基本情報の入力
+        </div>
     </div>
 
-    <form method="post" class="space-y-6">
+    <!-- ページヘッダー -->
+    <header class="notebook-create__header mb-6">
+        <nav aria-label="パンくずリスト" class="mb-4">
+            <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                <li><a href="{% url 'dashboard' %}" class="hover:text-gray-700 transition-colors">ホーム</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4" aria-hidden="true"></i></li>
+                <li class="text-gray-900 font-medium">新規ノート作成</li>
+            </ol>
+        </nav>
+        
+        <div class="text-center sm:text-left">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">新規ノート作成</h1>
+            <p class="text-sm md:text-base text-gray-600 mt-1">
+                投資分析を始めるための基本情報を入力してください
+            </p>
+        </div>
+    </header>
+
+    <!-- メインフォーム -->
+    <form method="post" class="notebook-create__form space-y-6" novalidate aria-describedby="form-help">
         {% csrf_token %}
         
-        <!-- 基本情報 -->
-        <div class="tw-card">
-            <div class="tw-card-header">
-                <h2 class="tw-card-title">基本情報</h2>
-            </div>
-            <div class="tw-card-content space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">銘柄コード</label>
-                        {{ form.stock_code }}
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">企業名</label>
-                        {{ form.company_name }}
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">サブタイトル</label>
-                    {{ form.subtitle }}
-                </div>
-            </div>
+        <!-- フォームヘルプ -->
+        <div id="form-help" class="sr-only">
+            すべての必須項目を入力してください。入力中に自動保存され、途中で中断しても内容は保持されます。
         </div>
 
-        <!-- 投資目標 -->
-        <div class="tw-card">
-            <div class="tw-card-header">
-                <h2 class="tw-card-title flex items-center gap-2">
-                    <i data-lucide="target" class="w-5 h-5"></i>
-                    投資目標
-                </h2>
-            </div>
-            <div class="tw-card-content space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">投資理由・戦略</label>
-                    {{ form.investment_goal }}
+        <!-- 基本情報セクション -->
+        <section class="form-section" aria-labelledby="basic-info-heading">
+            <div class="app-card">
+                <div class="app-card__header">
+                    <h2 id="basic-info-heading" class="app-card__title flex items-center gap-2">
+                        <i data-lucide="info" class="w-5 h-5 text-blue-600" aria-hidden="true"></i>
+                        基本情報
+                        <span class="app-badge app-badge--primary text-xs ml-auto">必須</span>
+                    </h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">現在価格 (円)</label>
-                        {{ form.current_price }}
+                <div class="app-card__content space-y-4">
+                    <!-- 銘柄検索＆選択 -->
+                    <div class="stock-search-container">
+                        <label for="stock-search" class="form-label block text-sm font-medium text-gray-700 mb-2">
+                            銘柄検索
+                            <span class="text-red-500 ml-1" aria-label="必須項目">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="text" 
+                                   id="stock-search"
+                                   class="app-input"
+                                   placeholder="銘柄名または銘柄コードを入力（例：トヨタ自動車、7203）"
+                                   autocomplete="off"
+                                   aria-describedby="stock-search-help"
+                                   role="combobox"
+                                   aria-expanded="false"
+                                   aria-owns="stock-search-results">
+                            <i data-lucide="search" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true"></i>
+                        </div>
+                        <div id="stock-search-help" class="text-xs text-gray-500 mt-1">
+                            銘柄名の一部または銘柄コードを入力すると候補が表示されます
+                        </div>
+                        
+                        <!-- 検索結果 -->
+                        <div id="stock-search-results" 
+                             class="stock-search-results absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto hidden"
+                             role="listbox"
+                             aria-label="銘柄検索結果">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">目標価格 (円)</label>
-                        {{ form.target_price }}
+
+                    <!-- 銘柄コード・企業名（隠しフィールドまたは表示専用） -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="form-field">
+                            <label for="id_stock_code" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                                銘柄コード
+                                <span class="text-red-500 ml-1" aria-label="必須項目">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="id_stock_code"
+                                   name="stock_code"
+                                   class="app-input"
+                                   placeholder="例: 7203"
+                                   required
+                                   aria-describedby="stock-code-error"
+                                   pattern="[0-9]{4}"
+                                   maxlength="10">
+                            <div id="stock-code-error" class="form-error hidden text-sm text-red-600 mt-1" role="alert"></div>
+                        </div>
+                        
+                        <div class="form-field sm:col-span-2">
+                            <label for="id_company_name" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                                企業名
+                                <span class="text-red-500 ml-1" aria-label="必須項目">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="id_company_name"
+                                   name="company_name"
+                                   class="app-input"
+                                   placeholder="例: トヨタ自動車"
+                                   required
+                                   aria-describedby="company-name-error"
+                                   maxlength="100">
+                            <div id="company-name-error" class="form-error hidden text-sm text-red-600 mt-1" role="alert"></div>
+                        </div>
+                    </div>
+
+                    <!-- サブタイトル -->
+                    <div class="form-field">
+                        <label for="id_subtitle" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                            サブタイトル
+                            <span class="text-gray-500 text-xs ml-1">(任意)</span>
+                        </label>
+                        <input type="text" 
+                               id="id_subtitle"
+                               name="subtitle"
+                               class="app-input"
+                               placeholder="例: 長期保有・配当重視"
+                               maxlength="300"
+                               aria-describedby="subtitle-help">
+                        <div id="subtitle-help" class="text-xs text-gray-500 mt-1">
+                            このノートの投資方針や特徴を簡潔に表現してください
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                        <i data-lucide="alert-circle" class="w-4 h-4 text-red-500"></i>
-                        リスク要因
-                    </label>
-                    {{ form.risk_factors }}
-                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- タグ -->
-        <div class="tw-card">
-            <div class="tw-card-header">
-                <h2 class="tw-card-title flex items-center gap-2">
-                    <i data-lucide="tag" class="w-5 h-5"></i>
-                    タグ
-                </h2>
-            </div>
-            <div class="tw-card-content space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">タグ</label>
-                    {{ form.tags }}
+        <!-- 投資目標セクション -->
+        <section class="form-section" aria-labelledby="investment-goals-heading">
+            <div class="app-card">
+                <div class="app-card__header">
+                    <h2 id="investment-goals-heading" class="app-card__title flex items-center gap-2">
+                        <i data-lucide="target" class="w-5 h-5 text-green-600" aria-hidden="true"></i>
+                        投資目標
+                        <span class="app-badge app-badge--secondary text-xs ml-auto">推奨</span>
+                    </h2>
                 </div>
+                <div class="app-card__content space-y-4">
+                    <!-- 投資理由・戦略 -->
+                    <div class="form-field">
+                        <label for="id_investment_goal" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                            投資理由・戦略
+                        </label>
+                        <textarea id="id_investment_goal"
+                                  name="investment_goal"
+                                  class="app-textarea"
+                                  rows="4"
+                                  placeholder="例: 安定配当を重視した長期投資。自動車業界のリーダーとして持続的成長を期待。電動化への対応も評価。"
+                                  aria-describedby="investment-goal-help"
+                                  maxlength="1000"></textarea>
+                        <div id="investment-goal-help" class="text-xs text-gray-500 mt-1">
+                            なぜこの銘柄に投資するのか、どのような戦略で臨むのかを記載してください
+                        </div>
+                    </div>
 
-                <!-- おすすめタグ -->
-                <div>
-                    <label class="block text-sm text-gray-600 mb-2">おすすめタグ</label>
-                    <div class="flex flex-wrap gap-2">
-                        {% for tag in suggested_tags %}
-                            <span class="tw-badge-outline cursor-pointer" onclick="addSuggestedTag('{{ tag }}')">
-                                #{{ tag }}
-                            </span>
-                        {% endfor %}
+                    <!-- 価格設定 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="form-field">
+                            <label for="id_current_price" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                                現在価格 (円)
+                            </label>
+                            <div class="relative">
+                                <input type="number" 
+                                       id="id_current_price"
+                                       name="current_price"
+                                       class="app-input pl-8"
+                                       placeholder="例: 2845"
+                                       step="0.01"
+                                       min="0"
+                                       aria-describedby="current-price-help">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                            </div>
+                            <div id="current-price-help" class="text-xs text-gray-500 mt-1">
+                                記録時点での株価を入力
+                            </div>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="id_target_price" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                                目標価格 (円)
+                            </label>
+                            <div class="relative">
+                                <input type="number" 
+                                       id="id_target_price"
+                                       name="target_price"
+                                       class="app-input pl-8"
+                                       placeholder="例: 3200"
+                                       step="0.01"
+                                       min="0"
+                                       aria-describedby="target-price-help">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                            </div>
+                            <div id="target-price-help" class="text-xs text-gray-500 mt-1">
+                                売却を検討する価格帯
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 目標達成度表示 -->
+                    <div id="price-analysis" class="price-analysis bg-gray-50 rounded-lg p-4 hidden">
+                        <h3 class="font-medium text-gray-900 mb-3">価格分析</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                            <div class="analysis-item">
+                                <span class="text-gray-600">目標との差額:</span>
+                                <span class="font-semibold ml-1" id="price-difference">-</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="text-gray-600">上昇率:</span>
+                                <span class="font-semibold ml-1" id="price-change-rate">-</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="text-gray-600">評価:</span>
+                                <span class="font-semibold ml-1" id="price-evaluation">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- リスク要因 -->
+                    <div class="form-field">
+                        <label for="id_risk_factors" class="form-label block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-red-500" aria-hidden="true"></i>
+                            リスク要因
+                        </label>
+                        <textarea id="id_risk_factors"
+                                  name="risk_factors"
+                                  class="app-textarea"
+                                  rows="3"
+                                  placeholder="例: EV移行リスク、為替変動、半導体不足、競合激化"
+                                  aria-describedby="risk-factors-help"
+                                  maxlength="500"></textarea>
+                        <div id="risk-factors-help" class="text-xs text-gray-500 mt-1">
+                            投資にあたって想定されるリスクを記載してください
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 保存ボタン -->
-        <div class="flex justify-end gap-3">
-            <a href="{% url 'dashboard' %}" class="tw-btn-outline">
-                キャンセル
-            </a>
-            <button type="submit" class="tw-btn-primary">
-                <i data-lucide="save" class="w-4 h-4"></i>
-                保存
-            </button>
+        <!-- タグセクション -->
+        <section class="form-section" aria-labelledby="tags-heading">
+            <div class="app-card">
+                <div class="app-card__header">
+                    <h2 id="tags-heading" class="app-card__title flex items-center gap-2">
+                        <i data-lucide="tag" class="w-5 h-5 text-purple-600" aria-hidden="true"></i>
+                        タグ
+                        <span class="app-badge app-badge--secondary text-xs ml-auto">任意</span>
+                    </h2>
+                </div>
+                <div class="app-card__content space-y-4">
+                    <!-- タグ入力 -->
+                    <div class="form-field">
+                        <label for="id_tags" class="form-label block text-sm font-medium text-gray-700 mb-1">
+                            タグ
+                        </label>
+                        <input type="text" 
+                               id="id_tags"
+                               name="tags"
+                               class="app-input"
+                               placeholder="タグをカンマ区切りで入力（例: 高配当,自動車,長期投資）"
+                               aria-describedby="tags-help">
+                        <div id="tags-help" class="text-xs text-gray-500 mt-1">
+                            後で検索や分類に使用できるタグを設定してください
+                        </div>
+                    </div>
+
+                    <!-- おすすめタグ -->
+                    <div class="suggested-tags">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">おすすめタグ</h3>
+                        <div class="tag-categories space-y-3">
+                            <!-- 投資スタイル -->
+                            <div class="tag-category">
+                                <h4 class="text-xs font-medium text-gray-600 mb-1">投資スタイル</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('高配当')" data-tag="高配当">
+                                        #高配当
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('成長株')" data-tag="成長株">
+                                        #成長株
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('バリュー投資')" data-tag="バリュー投資">
+                                        #バリュー投資
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('長期投資')" data-tag="長期投資">
+                                        #長期投資
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 業界セクター -->
+                            <div class="tag-category">
+                                <h4 class="text-xs font-medium text-gray-600 mb-1">業界・セクター</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('自動車')" data-tag="自動車">
+                                        #自動車
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('IT')" data-tag="IT">
+                                        #IT
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('金融')" data-tag="金融">
+                                        #金融
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('製造業')" data-tag="製造業">
+                                        #製造業
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 分析手法 -->
+                            <div class="tag-category">
+                                <h4 class="text-xs font-medium text-gray-600 mb-1">分析手法</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('決算分析')" data-tag="決算分析">
+                                        #決算分析
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('テクニカル')" data-tag="テクニカル">
+                                        #テクニカル
+                                    </button>
+                                    <button type="button" class="tag-suggestion app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors touch-friendly" 
+                                            onclick="addSuggestedTag('ファンダメンタル')" data-tag="ファンダメンタル">
+                                        #ファンダメンタル
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 現在のタグ表示 -->
+                    <div id="current-tags" class="current-tags">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">現在のタグ</h3>
+                        <div id="current-tags-list" class="flex flex-wrap gap-2 min-h-[2rem] border border-gray-200 rounded-lg p-2">
+                            <span class="text-sm text-gray-500">タグが選択されていません</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI分析支援（プレビュー） -->
+        <section class="form-section ai-preview" aria-labelledby="ai-preview-heading">
+            <div class="app-card border-blue-200 bg-blue-50">
+                <div class="app-card__header">
+                    <h2 id="ai-preview-heading" class="app-card__title flex items-center gap-2 text-blue-900">
+                        <i data-lucide="sparkles" class="w-5 h-5" aria-hidden="true"></i>
+                        AI分析プレビュー
+                        <span class="app-badge app-badge--secondary text-xs ml-auto">自動</span>
+                    </h2>
+                </div>
+                <div class="app-card__content">
+                    <div id="ai-preview-loading" class="text-center py-4 hidden">
+                        <div class="inline-flex items-center gap-2 text-blue-600">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" aria-hidden="true"></div>
+                            <span>AI分析中...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="ai-preview-content" class="space-y-4">
+                        <div class="bg-white rounded-lg p-3">
+                            <h3 class="font-medium text-blue-800 mb-2">推定投資戦略</h3>
+                            <p id="ai-investment-strategy" class="text-sm text-blue-700">
+                                入力内容に基づいて投資戦略を分析します
+                            </p>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-3">
+                            <h3 class="font-medium text-blue-800 mb-2">AI推奨タグ</h3>
+                            <div id="ai-suggested-tags" class="flex flex-wrap gap-2">
+                                <span class="text-sm text-gray-500">内容を入力すると表示されます</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-3">
+                            <h3 class="font-medium text-blue-800 mb-2">投資判断サポート</h3>
+                            <div id="ai-insights" class="text-sm text-blue-700">
+                                <span class="text-gray-500">詳細情報を入力するとインサイトが表示されます</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- フォームアクション -->
+        <div class="form-actions sticky bottom-0 bg-white border-t border-gray-200 p-4 -mx-4 sm:mx-0 sm:relative sm:bottom-auto sm:bg-transparent sm:border-t-0 sm:p-0">
+            <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                <button type="button" 
+                        class="app-btn app-btn--secondary order-2 sm:order-1"
+                        onclick="saveDraft()">
+                    <i data-lucide="save" class="w-4 h-4" aria-hidden="true"></i>
+                    下書き保存
+                </button>
+                <a href="{% url 'dashboard' %}" 
+                   class="app-btn app-btn--ghost order-3 sm:order-2"
+                   onclick="return confirmCancel()">
+                    キャンセル
+                </a>
+                <button type="submit" 
+                        class="app-btn app-btn--primary order-1 sm:order-3"
+                        id="submit-button">
+                    <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i>
+                    ノートを作成
+                </button>
+            </div>
         </div>
     </form>
 </div>
 
+<!-- JavaScript -->
 <script>
+    // フォーム状態管理
+    let formData = {};
+    let isFormDirty = false;
+    let aiAnalysisTimeout;
+
+    // フォーム初期化
+    function initializeForm() {
+        // 自動保存の設定
+        const formElements = document.querySelectorAll('input, textarea, select');
+        formElements.forEach(element => {
+            element.addEventListener('input', () => {
+                isFormDirty = true;
+                triggerAutoSave();
+                triggerAIAnalysis();
+            });
+        });
+
+        // 価格変更時の分析更新
+        const currentPrice = document.getElementById('id_current_price');
+        const targetPrice = document.getElementById('id_target_price');
+        
+        [currentPrice, targetPrice].forEach(element => {
+            if (element) {
+                element.addEventListener('input', updatePriceAnalysis);
+            }
+        });
+
+        // 銘柄検索の設定
+        setupStockSearch();
+        
+        // 下書きデータの復元
+        restoreDraft();
+    }
+
+    // 銘柄検索機能
+    function setupStockSearch() {
+        const searchInput = document.getElementById('stock-search');
+        const resultsContainer = document.getElementById('stock-search-results');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                hideSearchResults();
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                performStockSearch(query);
+            }, 300);
+        });
+
+        // キーボードナビゲーション
+        searchInput.addEventListener('keydown', function(e) {
+            const results = resultsContainer.querySelectorAll('[role="option"]');
+            let currentIndex = Array.from(results).findIndex(item => 
+                item.classList.contains('focused'));
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    currentIndex = Math.min(currentIndex + 1, results.length - 1);
+                    updateSearchFocus(results, currentIndex);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    currentIndex = Math.max(currentIndex - 1, -1);
+                    updateSearchFocus(results, currentIndex);
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (currentIndex >= 0 && results[currentIndex]) {
+                        selectStock(results[currentIndex]);
+                    }
+                    break;
+                case 'Escape':
+                    hideSearchResults();
+                    break;
+            }
+        });
+    }
+
+    // 銘柄検索実行
+    function performStockSearch(query) {
+        // モックデータ（実際のAPIに置き換え）
+        const mockResults = [
+            { code: '7203', name: 'トヨタ自動車', market: '東証プライム' },
+            { code: '6758', name: 'ソニーグループ', market: '東証プライム' },
+            { code: '9984', name: 'ソフトバンクグループ', market: '東証プライム' },
+            { code: '4519', name: '中外製薬', market: '東証プライム' },
+            { code: '8306', name: '三菱UFJフィナンシャル・グループ', market: '東証プライム' }
+        ];
+
+        const filteredResults = mockResults.filter(stock => 
+            stock.name.includes(query) || stock.code.includes(query)
+        );
+
+        displaySearchResults(filteredResults);
+    }
+
+    // 検索結果表示
+    function displaySearchResults(results) {
+        const container = document.getElementById('stock-search-results');
+        const searchInput = document.getElementById('stock-search');
+
+        if (results.length === 0) {
+            container.innerHTML = '<div class="p-3 text-center text-gray-500" role="option">該当する銘柄が見つかりません</div>';
+        } else {
+            container.innerHTML = results.map((stock, index) => `
+                <div class="stock-result p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                     role="option"
+                     tabindex="-1"
+                     data-stock-code="${stock.code}"
+                     data-stock-name="${stock.name}"
+                     onclick="selectStock(this)">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-semibold">${stock.code} ${stock.name}</div>
+                            <div class="text-sm text-gray-600">${stock.market}</div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400" aria-hidden="true"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        container.classList.remove('hidden');
+        searchInput.setAttribute('aria-expanded', 'true');
+        lucide.createIcons();
+    }
+
+    // 銘柄選択
+    function selectStock(element) {
+        const stockCode = element.dataset.stockCode;
+        const stockName = element.dataset.stockName;
+        
+        document.getElementById('id_stock_code').value = stockCode;
+        document.getElementById('id_company_name').value = stockName;
+        document.getElementById('stock-search').value = `${stockCode} ${stockName}`;
+        
+        hideSearchResults();
+        
+        // フォームバリデーション更新
+        validateField(document.getElementById('id_stock_code'));
+        validateField(document.getElementById('id_company_name'));
+        
+        // AI分析トリガー
+        triggerAIAnalysis();
+    }
+
+    // 検索結果非表示
+    function hideSearchResults() {
+        const container = document.getElementById('stock-search-results');
+        const searchInput = document.getElementById('stock-search');
+        
+        container.classList.add('hidden');
+        searchInput.setAttribute('aria-expanded', 'false');
+    }
+
+    // 検索フォーカス更新
+    function updateSearchFocus(results, currentIndex) {
+        results.forEach(item => item.classList.remove('focused'));
+        if (currentIndex >= 0 && results[currentIndex]) {
+            results[currentIndex].classList.add('focused');
+            results[currentIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // タグ追加
     function addSuggestedTag(tag) {
         const tagsInput = document.getElementById('id_tags');
         const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
@@ -122,7 +619,321 @@
         if (!currentTags.includes(tag)) {
             currentTags.push(tag);
             tagsInput.value = currentTags.join(', ');
+            updateCurrentTagsDisplay();
+            
+            // 視覚的フィードバック
+            const button = event.target;
+            button.classList.add('bg-blue-200', 'border-blue-300');
+            setTimeout(() => {
+                button.classList.remove('bg-blue-200', 'border-blue-300');
+            }, 500);
         }
     }
+
+    // 現在のタグ表示更新
+    function updateCurrentTagsDisplay() {
+        const tagsInput = document.getElementById('id_tags');
+        const container = document.getElementById('current-tags-list');
+        const tags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+        
+        if (tags.length === 0) {
+            container.innerHTML = '<span class="text-sm text-gray-500">タグが選択されていません</span>';
+        } else {
+            container.innerHTML = tags.map(tag => `
+                <span class="app-badge app-badge--primary text-xs flex items-center gap-1">
+                    #${tag}
+                    <button type="button" 
+                            class="text-white hover:text-gray-200 transition-colors"
+                            onclick="removeTag('${tag}')"
+                            aria-label="${tag}タグを削除">
+                        <i data-lucide="x" class="w-3 h-3" aria-hidden="true"></i>
+                    </button>
+                </span>
+            `).join('');
+            lucide.createIcons();
+        }
+    }
+
+    // タグ削除
+    function removeTag(tagToRemove) {
+        const tagsInput = document.getElementById('id_tags');
+        const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+        const newTags = currentTags.filter(tag => tag !== tagToRemove);
+        
+        tagsInput.value = newTags.join(', ');
+        updateCurrentTagsDisplay();
+    }
+
+    // 価格分析更新
+    function updatePriceAnalysis() {
+        const currentPrice = parseFloat(document.getElementById('id_current_price').value) || 0;
+        const targetPrice = parseFloat(document.getElementById('id_target_price').value) || 0;
+        const analysisDiv = document.getElementById('price-analysis');
+        
+        if (currentPrice > 0 && targetPrice > 0) {
+            const difference = targetPrice - currentPrice;
+            const changeRate = (difference / currentPrice) * 100;
+            
+            document.getElementById('price-difference').textContent = 
+                `¥${Math.abs(difference).toLocaleString()}${difference >= 0 ? ' 上昇' : ' 下落'}`;
+            document.getElementById('price-change-rate').textContent = 
+                `${changeRate >= 0 ? '+' : ''}${changeRate.toFixed(1)}%`;
+            
+            let evaluation = '';
+            if (changeRate >= 20) {
+                evaluation = '大幅上昇期待';
+            } else if (changeRate >= 10) {
+                evaluation = '上昇期待';
+            } else if (changeRate >= 0) {
+                evaluation = '小幅上昇期待';
+            } else if (changeRate >= -10) {
+                evaluation = '適正価格圏';
+            } else {
+                evaluation = '下落リスクあり';
+            }
+            
+            document.getElementById('price-evaluation').textContent = evaluation;
+            analysisDiv.classList.remove('hidden');
+        } else {
+            analysisDiv.classList.add('hidden');
+        }
+    }
+
+    // AI分析トリガー
+    function triggerAIAnalysis() {
+        clearTimeout(aiAnalysisTimeout);
+        
+        aiAnalysisTimeout = setTimeout(() => {
+            performAIAnalysis();
+        }, 1000);
+    }
+
+    // AI分析実行
+    function performAIAnalysis() {
+        const formData = new FormData(document.querySelector('form'));
+        const content = [
+            formData.get('company_name'),
+            formData.get('subtitle'),
+            formData.get('investment_goal'),
+            formData.get('risk_factors')
+        ].filter(Boolean).join(' ');
+        
+        if (content.length < 10) return;
+        
+        const loadingDiv = document.getElementById('ai-preview-loading');
+        loadingDiv.classList.remove('hidden');
+        
+        fetch('/api/ai/analyze/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                content: content,
+                title: formData.get('company_name')
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAIAnalysis(data.analysis);
+            }
+            loadingDiv.classList.add('hidden');
+        })
+        .catch(error => {
+            console.error('AI分析エラー:', error);
+            loadingDiv.classList.add('hidden');
+        });
+    }
+
+    // AI分析結果表示
+    function displayAIAnalysis(analysis) {
+        // 投資戦略表示
+        const strategyLabels = {
+            'dividend_income': '配当収入重視型',
+            'growth_investing': '成長投資型',
+            'value_investing': 'バリュー投資型',
+            'long_term_holding': '長期保有型'
+        };
+        
+        document.getElementById('ai-investment-strategy').textContent = 
+            strategyLabels[analysis.investment_strategy] || '分散投資型';
+        
+        // AI推奨タグ表示
+        const aiTagsContainer = document.getElementById('ai-suggested-tags');
+        if (analysis.suggested_tags && analysis.suggested_tags.length > 0) {
+            aiTagsContainer.innerHTML = analysis.suggested_tags.map(tag => `
+                <button type="button" 
+                        class="app-badge app-badge--outline cursor-pointer hover:bg-blue-50 transition-colors"
+                        onclick="addSuggestedTag('${tag}')">
+                    #${tag}
+                </button>
+            `).join('');
+        }
+        
+        // インサイト表示
+        const insightsContainer = document.getElementById('ai-insights');
+        if (analysis.investment_insights && analysis.investment_insights.length > 0) {
+            insightsContainer.innerHTML = analysis.investment_insights.map(insight => `
+                <div class="flex items-start gap-2 mb-1">
+                    <i data-lucide="lightbulb" class="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" aria-hidden="true"></i>
+                    <span>${insight}</span>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+    }
+
+    // フォームバリデーション
+    function validateField(field) {
+        const errorDiv = document.getElementById(field.id + '-error');
+        let isValid = true;
+        let errorMessage = '';
+        
+        if (field.hasAttribute('required') && !field.value.trim()) {
+            isValid = false;
+            errorMessage = 'この項目は必須です';
+        } else if (field.type === 'number' && field.value && isNaN(field.value)) {
+            isValid = false;
+            errorMessage = '数値を入力してください';
+        } else if (field.pattern && field.value && !new RegExp(field.pattern).test(field.value)) {
+            isValid = false;
+            errorMessage = '形式が正しくありません';
+        }
+        
+        if (isValid) {
+            field.classList.remove('border-red-300');
+            field.setAttribute('aria-invalid', 'false');
+            if (errorDiv) {
+                errorDiv.classList.add('hidden');
+                errorDiv.textContent = '';
+            }
+        } else {
+            field.classList.add('border-red-300');
+            field.setAttribute('aria-invalid', 'true');
+            if (errorDiv) {
+                errorDiv.classList.remove('hidden');
+                errorDiv.textContent = errorMessage;
+            }
+        }
+        
+        return isValid;
+    }
+
+    // フォーム送信前バリデーション
+    function validateForm() {
+        const requiredFields = document.querySelectorAll('[required]');
+        let isFormValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!validateField(field)) {
+                isFormValid = false;
+            }
+        });
+        
+        if (!isFormValid) {
+            // 最初のエラーフィールドにフォーカス
+            const firstError = document.querySelector('[aria-invalid="true"]');
+            if (firstError) {
+                firstError.focus();
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        return isFormValid;
+    }
+
+    // 自動保存
+    function triggerAutoSave() {
+        // 実装予定：5秒後に自動保存
+    }
+
+    // 下書き保存
+    function saveDraft() {
+        const formData = new FormData(document.querySelector('form'));
+        const draftData = Object.fromEntries(formData.entries());
+        
+        localStorage.setItem('notebook_draft', JSON.stringify(draftData));
+        
+        // 成功メッセージ表示
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> 保存完了';
+        button.disabled = true;
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            lucide.createIcons();
+        }, 2000);
+    }
+
+    // 下書き復元
+    function restoreDraft() {
+        const draftData = localStorage.getItem('notebook_draft');
+        if (draftData) {
+            try {
+                const data = JSON.parse(draftData);
+                Object.keys(data).forEach(key => {
+                    const field = document.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        field.value = data[key];
+                    }
+                });
+                updateCurrentTagsDisplay();
+                updatePriceAnalysis();
+            } catch (error) {
+                console.error('下書き復元エラー:', error);
+            }
+        }
+    }
+
+    // キャンセル確認
+    function confirmCancel() {
+        if (isFormDirty) {
+            return confirm('入力中の内容が失われます。本当にキャンセルしますか？');
+        }
+        return true;
+    }
+
+    // ページ離脱時の確認
+    window.addEventListener('beforeunload', function(e) {
+        if (isFormDirty) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // フォーム送信
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // 下書きデータ削除
+        localStorage.removeItem('notebook_draft');
+        
+        // 送信ボタン無効化
+        const submitButton = document.getElementById('submit-button');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>作成中...';
+    });
+
+    // DOMロード後に実行
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeForm();
+        
+        // タグ入力フィールドの変更監視
+        document.getElementById('id_tags').addEventListener('input', updateCurrentTagsDisplay);
+        
+        // 外部クリックで検索結果を閉じる
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.stock-search-container')) {
+                hideSearchResults();
+            }
+        });
+    });
 </script>
 {% endblock %}
