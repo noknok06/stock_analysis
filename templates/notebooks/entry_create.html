@@ -215,12 +215,12 @@
                             </div>
 
                             <!-- メインエディター -->
-                            <div class="editor-container relative">
+                            <div class="editor-container relative w-full">
                                 <textarea id="id_content"
-                                          name="content"
-                                          class="app-textarea rounded-t-none border-t-0 resize-none"
-                                          rows="12"
-                                          placeholder="分析内容を入力してください...
+                                        name="content"
+                                        class="app-textarea rounded-t-none border-t-0 resize-none w-full min-w-full"
+                                        rows="12"
+                                        placeholder="分析内容を入力してください...
 
 例:
 ・売上高は前年同期比12%増の8.9兆円
@@ -265,11 +265,11 @@
                                     タグ
                                 </label>
                                 <input type="text" 
-                                       id="id_tags"
-                                       name="tags"
-                                       class="app-input"
-                                       placeholder="タグをカンマ区切りで入力"
-                                       aria-describedby="tags-help">
+                                    id="id_tags"
+                                    name="tags"
+                                    class="app-input w-full min-w-full"
+                                    placeholder="タグをカンマ区切りで入力"
+                                    aria-describedby="tags-help">
                                 <div id="tags-help" class="text-xs text-gray-500 mt-1">
                                     例: 決算分析, 業績好調, Q3
                                 </div>

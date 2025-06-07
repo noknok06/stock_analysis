@@ -53,12 +53,33 @@
             @apply flex h-10 md:h-12 w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
         }
         .app-textarea {
-            @apply flex min-h-[80px] md:min-h-[100px] w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-vertical;
+            @apply flex min-h-[120px] md:min-h-[150px] w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-vertical text-left;
         }
         .app-select {
             @apply flex h-10 md:h-12 w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
         }
-        
+        /* テキストの左寄せを強制 */
+        .entry-card__content, .risk-factors, .investment-goal {
+            text-align: left !important;
+        }
+
+        /* フォーム要素の幅確保 */
+        .form-field .app-input, 
+        .form-field .app-textarea, 
+        .form-field .app-select {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* エディターの幅調整 */
+        .editor-container {
+            width: 100% !important;
+        }
+
+        .editor-container textarea {
+            width: 100% !important;
+            min-width: 100% !important;
+        }        
         /* バッジコンポーネント */
         .app-badge {
             @apply inline-flex items-center rounded-full px-2 md:px-2.5 py-0.5 md:py-1 text-xs md:text-sm font-semibold transition-colors;
@@ -78,7 +99,17 @@
             @apply fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300;
         }
         .mobile-menu__panel {
-            @apply fixed right-0 top-0 h-full w-80 max-w-[90vw] bg-white shadow-xl transform transition-transform duration-300 ease-out;
+            @apply fixed right-0 top-0 h-auto max-h-screen w-80 max-w-[90vw] bg-white shadow-xl transform transition-transform duration-300 ease-out overflow-y-auto;
+        }
+
+        /* PC版では幅を調整 */
+        @media (min-width: 768px) {
+            .mobile-menu__panel {
+                @apply w-96 h-auto max-h-[80vh] top-4 right-4 rounded-lg;
+            }
+            .mobile-menu {
+                @apply bg-transparent;
+            }
         }
         .mobile-menu--hidden {
             @apply opacity-0 pointer-events-none;
