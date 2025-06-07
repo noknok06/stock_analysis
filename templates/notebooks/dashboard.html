@@ -1,4 +1,4 @@
-<!-- templates/notebooks/dashboard.html (改良版) -->
+<!-- templates/notebooks/dashboard.html (ダークモード対応版) -->
 {% extends 'base.html' %}
 
 {% block title %}ダッシュボード - 株式分析記録アプリ{% endblock %}
@@ -9,11 +9,11 @@
     <header class="dashboard__header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="dashboard__header-content">
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+                <h1 class="text-2xl md:text-3xl font-bold text-primary">
                     <span role="img" aria-label="ダッシュボード">📊</span>
                     株式分析ダッシュボード
                 </h1>
-                <p class="text-sm md:text-base text-gray-600 mt-1">
+                <p class="text-sm md:text-base text-secondary mt-1">
                     投資判断プロセスを記録・追跡し、投資スキルを向上させる
                 </p>
             </div>
@@ -31,21 +31,21 @@
         </div>
     </header>
 
-    <!-- インライン検索バー（Hub & Spoke の中心機能） -->
+    <!-- インライン検索バー -->
     {% if user.is_authenticated %}
     <section class="dashboard__search" aria-labelledby="search-heading">
         <h2 id="search-heading" class="sr-only">検索</h2>
-        <div class="app-card">
+        <div class="app-card glass-effect">
             <div class="app-card__content p-3 md:p-4">
                 <div class="search-container relative">
                     <label for="inline-search" class="sr-only">銘柄名、タグ、記録内容を検索</label>
                     <div class="relative">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" aria-hidden="true"></i>
+                        <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4 md:w-5 md:h-5" aria-hidden="true"></i>
                         <input 
                             type="text" 
                             id="inline-search"
                             placeholder="銘柄名、タグ、記録内容を検索..." 
-                            class="app-input pl-10 md:pl-12 text-base md:text-lg h-12 md:h-14"
+                            class="app-input pl-10 md:pl-12 text-base md:text-lg h-12 md:h-14 bg-tertiary border-secondary"
                             autocomplete="off"
                             role="combobox"
                             aria-expanded="false"
@@ -54,13 +54,12 @@
                         
                         <!-- 検索モード切り替え -->
                         <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                            <label class="search-toggle flex items-center gap-1 text-xs md:text-sm text-gray-600">
-                                <input type="checkbox" id="semantic-search-toggle" class="rounded" aria-describedby="search-mode-help">
+                            <label class="search-toggle flex items-center gap-1 text-xs md:text-sm text-secondary">
+                                <input type="checkbox" id="semantic-search-toggle" class="rounded bg-tertiary border-secondary text-accent-blue" aria-describedby="search-mode-help">
                                 <span>AI検索</span>
                             </label>
                         </div>
                         
-                        <!-- 検索ヘルプ -->
                         <div id="search-mode-help" class="sr-only">
                             AI検索を有効にすると、意味的に関連するコンテンツも検索されます
                         </div>
@@ -68,18 +67,18 @@
                     
                     <!-- 基本検索結果 -->
                     <div id="search-results" 
-                         class="search-results absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto hidden"
+                         class="search-results absolute top-full left-0 right-0 mt-2 bg-secondary border border-primary rounded-lg shadow-xl z-20 max-h-64 overflow-y-auto hidden"
                          role="listbox"
                          aria-label="検索結果">
                     </div>
                     
                     <!-- AI検索結果 -->
                     <div id="semantic-results" 
-                         class="search-results search-results--ai absolute top-full left-0 right-0 mt-2 bg-blue-50 border border-blue-200 rounded-lg shadow-lg z-20 max-h-80 overflow-y-auto hidden"
+                         class="search-results search-results--ai absolute top-full left-0 right-0 mt-2 bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-accent-blue rounded-lg shadow-xl z-20 max-h-80 overflow-y-auto hidden glass-effect"
                          role="listbox"
                          aria-label="AI検索結果">
-                        <div class="search-results__header p-3 border-b border-blue-200 bg-blue-100">
-                            <div class="flex items-center gap-2 text-blue-800">
+                        <div class="search-results__header p-3 border-b border-accent-blue/30 bg-accent-blue/10">
+                            <div class="flex items-center gap-2 text-accent-blue">
                                 <i data-lucide="sparkles" class="w-4 h-4" aria-hidden="true"></i>
                                 <span class="font-medium text-sm md:text-base">AI検索結果</span>
                             </div>
@@ -96,54 +95,62 @@
     <section class="dashboard__stats" aria-labelledby="stats-heading">
         <h2 id="stats-heading" class="sr-only">統計情報</h2>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <div class="stats-card app-card">
+            <div class="stats-card app-card hover:glow-blue transition-all duration-300">
                 <div class="app-card__content p-3 md:p-4">
                     <div class="flex items-center justify-between">
                         <div class="stats-card__content">
-                            <p class="text-xs md:text-sm text-gray-600">アクティブノート</p>
-                            <p class="text-xl md:text-2xl font-bold text-gray-900">{{ stats.active_notebooks }}</p>
-                            <p class="text-xs text-green-600 mt-1">+{{ stats.total_notebooks|add:"-5" }}</p>
+                            <p class="text-xs md:text-sm text-secondary">アクティブノート</p>
+                            <p class="text-xl md:text-2xl font-bold text-primary">{{ stats.active_notebooks }}</p>
+                            <p class="text-xs text-accent-green mt-1">+{{ stats.total_notebooks|add:"-5" }}</p>
                         </div>
-                        <i data-lucide="book-open" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
+                        <div class="p-3 bg-accent-blue/20 rounded-full">
+                            <i data-lucide="book-open" class="w-6 h-6 md:w-8 md:h-8 text-accent-blue" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="stats-card app-card">
+            <div class="stats-card app-card hover:glow-green transition-all duration-300">
                 <div class="app-card__content p-3 md:p-4">
                     <div class="flex items-center justify-between">
                         <div class="stats-card__content">
-                            <p class="text-xs md:text-sm text-gray-600">今月の記録</p>
-                            <p class="text-xl md:text-2xl font-bold text-gray-900">{{ stats.monthly_entries }}</p>
-                            <p class="text-xs text-green-600 mt-1">+5</p>
+                            <p class="text-xs md:text-sm text-secondary">今月の記録</p>
+                            <p class="text-xl md:text-2xl font-bold text-primary">{{ stats.monthly_entries }}</p>
+                            <p class="text-xs text-accent-green mt-1">+5</p>
                         </div>
-                        <i data-lucide="clock" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
+                        <div class="p-3 bg-accent-green/20 rounded-full">
+                            <i data-lucide="clock" class="w-6 h-6 md:w-8 md:h-8 text-accent-green" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="stats-card app-card">
+            <div class="stats-card app-card hover:glow-blue transition-all duration-300">
                 <div class="app-card__content p-3 md:p-4">
                     <div class="flex items-center justify-between">
                         <div class="stats-card__content">
-                            <p class="text-xs md:text-sm text-gray-600">総エントリー</p>
-                            <p class="text-xl md:text-2xl font-bold text-gray-900">{{ stats.total_entries }}</p>
-                            <p class="text-xs text-green-600 mt-1">+12</p>
+                            <p class="text-xs md:text-sm text-secondary">総エントリー</p>
+                            <p class="text-xl md:text-2xl font-bold text-primary">{{ stats.total_entries }}</p>
+                            <p class="text-xs text-accent-green mt-1">+12</p>
                         </div>
-                        <i data-lucide="bar-chart-3" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
+                        <div class="p-3 bg-accent-purple/20 rounded-full">
+                            <i data-lucide="bar-chart-3" class="w-6 h-6 md:w-8 md:h-8 text-accent-purple" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="stats-card app-card">
+            <div class="stats-card app-card hover:glow-green transition-all duration-300">
                 <div class="app-card__content p-3 md:p-4">
                     <div class="flex items-center justify-between">
                         <div class="stats-card__content">
-                            <p class="text-xs md:text-sm text-gray-600">目標達成率</p>
-                            <p class="text-xl md:text-2xl font-bold text-gray-900">75%</p>
-                            <p class="text-xs text-green-600 mt-1">+3%</p>
+                            <p class="text-xs md:text-sm text-secondary">目標達成率</p>
+                            <p class="text-xl md:text-2xl font-bold text-primary">75%</p>
+                            <p class="text-xs text-accent-green mt-1">+3%</p>
                         </div>
-                        <i data-lucide="target" class="w-6 h-6 md:w-8 md:h-8 text-blue-600" aria-hidden="true"></i>
+                        <div class="p-3 bg-accent-yellow/20 rounded-full">
+                            <i data-lucide="target" class="w-6 h-6 md:w-8 md:h-8 text-accent-yellow" aria-hidden="true"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -156,39 +163,39 @@
         <div class="dashboard__main lg:col-span-2 space-y-4 md:space-y-6">
             <!-- クイックアクション -->
             <section class="dashboard__quick-actions" aria-labelledby="quick-actions-heading">
-                <div class="app-card">
+                <div class="app-card gradient-primary">
                     <div class="app-card__header">
-                        <h2 id="quick-actions-heading" class="app-card__title">クイックアクション</h2>
+                        <h2 id="quick-actions-heading" class="app-card__title text-white">クイックアクション</h2>
                     </div>
                     <div class="app-card__content">
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <a href="{% url 'notebook_create' %}" 
-                               class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                               class="quick-action bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50 h-16 md:h-20 flex flex-col items-center justify-center rounded-lg transition-all duration-200 hover:transform hover:scale-105"
                                aria-describedby="new-notebook-desc">
                                 <i data-lucide="plus" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
-                                <span class="text-xs md:text-sm">新規ノート</span>
+                                <span class="text-xs md:text-sm font-medium">新規ノート</span>
                             </a>
                             <div id="new-notebook-desc" class="sr-only">新しい投資ノートを作成</div>
                             
                             <a href="{% url 'calculator' %}" 
-                               class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                               class="quick-action bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50 h-16 md:h-20 flex flex-col items-center justify-center rounded-lg transition-all duration-200 hover:transform hover:scale-105"
                                aria-describedby="calculator-desc">
                                 <i data-lucide="calculator" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
-                                <span class="text-xs md:text-sm">計算ツール</span>
+                                <span class="text-xs md:text-sm font-medium">計算ツール</span>
                             </a>
                             <div id="calculator-desc" class="sr-only">配当利回りや投資金額を計算</div>
                             
-                            <button class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                            <button class="quick-action bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50 h-16 md:h-20 flex flex-col items-center justify-center rounded-lg transition-all duration-200 hover:transform hover:scale-105"
                                     aria-describedby="stock-check-desc">
                                 <i data-lucide="trending-up" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
-                                <span class="text-xs md:text-sm">株価チェック</span>
+                                <span class="text-xs md:text-sm font-medium">株価チェック</span>
                             </button>
                             <div id="stock-check-desc" class="sr-only">追跡中銘柄の株価を確認</div>
                             
-                            <button class="quick-action app-btn app-btn--secondary h-16 md:h-20 flex-col touch-friendly"
+                            <button class="quick-action bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50 h-16 md:h-20 flex flex-col items-center justify-center rounded-lg transition-all duration-200 hover:transform hover:scale-105"
                                     aria-describedby="community-desc">
                                 <i data-lucide="users" class="w-5 h-5 md:w-6 md:h-6 mb-1 md:mb-2" aria-hidden="true"></i>
-                                <span class="text-xs md:text-sm">コミュニティ</span>
+                                <span class="text-xs md:text-sm font-medium">コミュニティ</span>
                             </button>
                             <div id="community-desc" class="sr-only">他の投資家と知見を共有</div>
                         </div>
@@ -207,24 +214,24 @@
                         {% if recent_notebooks %}
                             <div class="space-y-3 md:space-y-4">
                                 {% for notebook in recent_notebooks %}
-                                <article class="notebook-card border rounded-lg p-3 md:p-4 hover:bg-gray-50 cursor-pointer transition-colors" 
+                                <article class="notebook-card bg-tertiary hover:bg-accent border border-primary hover:border-secondary rounded-lg p-3 md:p-4 cursor-pointer transition-all duration-200 hover:transform hover:scale-[1.02] hover:shadow-xl" 
                                          data-notebook-id="{{ notebook.pk }}"
-                                         tabindex="0"
                                          role="link"
                                          aria-labelledby="notebook-{{ notebook.pk }}-title"
+                                         tabindex="0"
                                          onclick="window.location.href='{% url 'notebook_detail' notebook.pk %}'"
                                          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{% url 'notebook_detail' notebook.pk %}'}">
                                     
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="notebook-card__content flex-1 min-w-0">
-                                            <h3 id="notebook-{{ notebook.pk }}-title" class="font-semibold text-base md:text-lg text-gray-900 truncate">
+                                            <h3 id="notebook-{{ notebook.pk }}-title" class="font-semibold text-base md:text-lg text-primary truncate">
                                                 {{ notebook.title }}
                                             </h3>
                                             {% if notebook.subtitle %}
-                                                <p class="text-sm md:text-base text-gray-600 mt-1 line-clamp-2">{{ notebook.subtitle }}</p>
+                                                <p class="text-sm md:text-base text-secondary mt-1 line-clamp-2">{{ notebook.subtitle }}</p>
                                             {% endif %}
                                             
-                                            <div class="notebook-card__meta flex flex-wrap items-center gap-2 md:gap-4 mt-2 text-xs md:text-sm text-gray-500">
+                                            <div class="notebook-card__meta flex flex-wrap items-center gap-2 md:gap-4 mt-2 text-xs md:text-sm text-muted">
                                                 {% if notebook.current_price %}
                                                     <span class="flex items-center gap-1">
                                                         <i data-lucide="yen-sign" class="w-3 h-3" aria-hidden="true"></i>
@@ -232,7 +239,7 @@
                                                     </span>
                                                 {% endif %}
                                                 {% if notebook.target_price %}
-                                                    <span class="flex items-center gap-1">
+                                                    <span class="flex items-center gap-1 text-accent-green">
                                                         <i data-lucide="target" class="w-3 h-3" aria-hidden="true"></i>
                                                         目標価格: ¥{{ notebook.target_price|floatformat:0 }}
                                                     </span>
@@ -250,18 +257,18 @@
                                         </div>
                                         
                                         <div class="notebook-card__actions flex flex-col items-end gap-2">
-                                            <time class="text-xs text-gray-500" datetime="{{ notebook.updated_at|date:'c' }}">
+                                            <time class="text-xs text-muted" datetime="{{ notebook.updated_at|date:'c' }}">
                                                 {{ notebook.updated_at|timesince }}前
                                             </time>
                                             <div class="flex gap-1">
                                                 <a href="{% url 'notebook_edit' notebook.pk %}" 
-                                                   class="app-btn app-btn--ghost app-btn--sm p-1 touch-friendly"
+                                                   class="app-btn app-btn--ghost app-btn--sm p-1 touch-friendly hover:text-accent-blue"
                                                    aria-label="{{ notebook.title }}を編集"
                                                    onclick="event.stopPropagation()">
                                                     <i data-lucide="edit" class="w-4 h-4" aria-hidden="true"></i>
                                                 </a>
                                                 <a href="{% url 'entry_create' notebook.pk %}" 
-                                                   class="app-btn app-btn--ghost app-btn--sm p-1 touch-friendly"
+                                                   class="app-btn app-btn--ghost app-btn--sm p-1 touch-friendly hover:text-accent-green"
                                                    aria-label="{{ notebook.title }}に記録を追加"
                                                    onclick="event.stopPropagation()">
                                                     <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
@@ -281,9 +288,11 @@
                             </div>
                         {% else %}
                             <div class="empty-state text-center py-8 md:py-12">
-                                <i data-lucide="book-open" class="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-gray-300" aria-hidden="true"></i>
-                                <h3 class="text-lg font-medium text-gray-900 mb-2">まだノートがありません</h3>
-                                <p class="text-sm md:text-base text-gray-600 mb-4">最初のノートを作成して分析を始めましょう</p>
+                                <div class="p-6 bg-tertiary rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+                                    <i data-lucide="book-open" class="w-12 h-12 text-muted" aria-hidden="true"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-primary mb-2">まだノートがありません</h3>
+                                <p class="text-sm md:text-base text-secondary mb-4">最初のノートを作成して分析を始めましょう</p>
                                 <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary">
                                     <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
                                     最初のノートを作成
@@ -302,16 +311,19 @@
             <section class="market-summary" aria-labelledby="market-heading">
                 <div class="app-card">
                     <div class="app-card__header">
-                        <h2 id="market-heading" class="app-card__title">市場サマリー</h2>
+                        <h2 id="market-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-5 h-5 text-accent-green" aria-hidden="true"></i>
+                            市場サマリー
+                        </h2>
                     </div>
                     <div class="app-card__content">
                         <div class="space-y-3">
                             {% for item in market_data %}
-                            <div class="market-item flex items-center justify-between py-2 border-b last:border-b-0">
-                                <span class="font-medium text-sm md:text-base">{{ item.name }}</span>
+                            <div class="market-item flex items-center justify-between py-2 border-b border-primary last:border-b-0">
+                                <span class="font-medium text-sm md:text-base text-primary">{{ item.name }}</span>
                                 <div class="text-right">
-                                    <div class="font-semibold text-sm md:text-base">{{ item.value }}</div>
-                                    <div class="text-xs md:text-sm {% if '+' in item.change %}text-green-600{% else %}text-red-600{% endif %}">
+                                    <div class="font-semibold text-sm md:text-base text-primary">{{ item.value }}</div>
+                                    <div class="text-xs md:text-sm {% if '+' in item.change %}text-accent-green{% else %}text-accent-red{% endif %}">
                                         {{ item.change }} ({{ item.change_percent }})
                                     </div>
                                 </div>
@@ -326,12 +338,15 @@
             <section class="popular-tags" aria-labelledby="tags-heading">
                 <div class="app-card">
                     <div class="app-card__header">
-                        <h2 id="tags-heading" class="app-card__title">人気タグ</h2>
+                        <h2 id="tags-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="hash" class="w-5 h-5 text-accent-purple" aria-hidden="true"></i>
+                            人気タグ
+                        </h2>
                     </div>
                     <div class="app-card__content">
                         <div class="flex flex-wrap gap-2">
                             {% for tag in popular_tags %}
-                                <button class="app-badge app-badge--outline touch-friendly" 
+                                <button class="app-badge app-badge--outline hover:bg-accent-blue hover:text-white hover:border-accent-blue transition-all duration-200 touch-friendly" 
                                         onclick="setSearchQuery('#{{ tag.name }}')"
                                         aria-label="{{ tag.name }}タグで検索">
                                     #{{ tag.name }}
@@ -344,21 +359,24 @@
 
             <!-- コミュニティ活動 -->
             <section class="community-activity" aria-labelledby="community-heading">
-                <div class="app-card">
+                <div class="app-card glass-effect">
                     <div class="app-card__header">
-                        <h2 id="community-heading" class="app-card__title">コミュニティ</h2>
+                        <h2 id="community-heading" class="app-card__title flex items-center gap-2">
+                            <i data-lucide="users" class="w-5 h-5 text-accent-blue" aria-hidden="true"></i>
+                            コミュニティ
+                        </h2>
                     </div>
                     <div class="app-card__content">
                         <div class="space-y-3">
-                            <article class="community-item">
-                                <h3 class="font-medium text-sm md:text-base">話題の銘柄</h3>
-                                <p class="text-xs md:text-sm text-gray-600">トヨタ自動車の決算分析が注目されています</p>
+                            <article class="community-item p-3 bg-tertiary rounded-lg hover:bg-accent transition-colors duration-200">
+                                <h3 class="font-medium text-sm md:text-base text-primary">話題の銘柄</h3>
+                                <p class="text-xs md:text-sm text-secondary">トヨタ自動車の決算分析が注目されています</p>
                             </article>
-                            <article class="community-item">
-                                <h3 class="font-medium text-sm md:text-base">人気の投稿</h3>
-                                <p class="text-xs md:text-sm text-gray-600">高配当株の選び方について</p>
+                            <article class="community-item p-3 bg-tertiary rounded-lg hover:bg-accent transition-colors duration-200">
+                                <h3 class="font-medium text-sm md:text-base text-primary">人気の投稿</h3>
+                                <p class="text-xs md:text-sm text-secondary">高配当株の選び方について</p>
                             </article>
-                            <button class="app-btn app-btn--secondary w-full app-btn--sm">
+                            <button class="app-btn app-btn--secondary w-full app-btn--sm hover:bg-accent-blue hover:text-white transition-all duration-200">
                                 コミュニティを見る
                                 <i data-lucide="external-link" class="w-4 h-4 ml-2" aria-hidden="true"></i>
                             </button>
@@ -503,16 +521,16 @@
         const searchInput = document.getElementById('inline-search');
         
         if (results.length === 0) {
-            searchResults.innerHTML = '<div class="p-4 text-center text-gray-500" role="option">検索結果がありません</div>';
+            searchResults.innerHTML = '<div class="p-4 text-center text-muted">検索結果がありません</div>';
         } else {
             searchResults.innerHTML = results.map((result, index) => `
                 <a href="${result.url}" 
-                   class="block p-3 hover:bg-gray-50 focus:bg-gray-50 border-b last:border-b-0 transition-colors"
+                   class="block p-3 hover:bg-tertiary focus:bg-tertiary border-b border-primary last:border-b-0 transition-colors"
                    role="option"
                    aria-describedby="result-${index}-desc"
                    tabindex="-1">
-                    <div class="font-semibold text-sm md:text-base">${result.title}</div>
-                    <div id="result-${index}-desc" class="text-xs md:text-sm text-gray-600">${result.subtitle}</div>
+                    <div class="font-semibold text-sm md:text-base text-primary">${result.title}</div>
+                    <div id="result-${index}-desc" class="text-xs md:text-sm text-secondary">${result.subtitle}</div>
                     <div class="flex gap-1 mt-1">
                         ${result.tags.slice(0, 3).map(tag => 
                             `<span class="app-badge app-badge--outline text-xs">#${tag}</span>`
@@ -533,32 +551,32 @@
         const searchInput = document.getElementById('inline-search');
         
         if (results.length === 0) {
-            semanticContent.innerHTML = '<div class="p-4 text-center text-gray-500" role="option">AI検索で関連するコンテンツが見つかりませんでした</div>';
+            semanticContent.innerHTML = '<div class="p-4 text-center text-muted">AI検索で関連するコンテンツが見つかりませんでした</div>';
         } else {
             semanticContent.innerHTML = results.map((result, index) => `
                 <a href="${result.url}" 
-                   class="block p-3 hover:bg-blue-100 focus:bg-blue-100 border-b border-blue-200 last:border-b-0 transition-colors"
+                   class="block p-3 hover:bg-white/10 focus:bg-white/10 border-b border-accent-blue/30 last:border-b-0 transition-colors"
                    role="option"
                    aria-describedby="ai-result-${index}-desc"
                    tabindex="-1">
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm md:text-base text-blue-900">${result.title}</div>
-                            <div class="text-xs md:text-sm text-blue-700 mb-2">${result.subtitle}</div>
-                            <div id="ai-result-${index}-desc" class="text-xs text-blue-600 bg-white p-2 rounded mb-2 line-clamp-2">
+                            <div class="font-semibold text-sm md:text-base text-primary">${result.title}</div>
+                            <div class="text-xs md:text-sm text-secondary mb-2">${result.subtitle}</div>
+                            <div id="ai-result-${index}-desc" class="text-xs text-muted bg-tertiary p-2 rounded mb-2 line-clamp-2">
                                 ${result.content_preview}
                             </div>
                             <div class="flex gap-1">
                                 ${result.tags.slice(0, 3).map(tag => 
-                                    `<span class="bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs">#${tag}</span>`
+                                    `<span class="bg-accent-blue/20 text-accent-blue px-2 py-1 rounded text-xs">#${tag}</span>`
                                 ).join('')}
                             </div>
                         </div>
                         <div class="text-right ml-3">
-                            <div class="text-xs text-blue-600 font-medium">
+                            <div class="text-xs text-accent-blue font-medium">
                                 関連度: ${Math.round(result.relevance_score * 100)}%
                             </div>
-                            <div class="text-xs text-blue-500">
+                            <div class="text-xs text-secondary">
                                 ${result.entry_count}件の記録
                             </div>
                         </div>
@@ -575,7 +593,7 @@
     function showSearchError(message) {
         const searchResults = document.getElementById('search-results');
         searchResults.innerHTML = `
-            <div class="p-4 text-center text-red-600" role="alert">
+            <div class="p-4 text-center text-accent-red" role="alert">
                 <i data-lucide="alert-circle" class="w-5 h-5 mx-auto mb-2"></i>
                 <div>${message}</div>
             </div>
@@ -633,93 +651,29 @@
         return searchContainer || searchResults;
     }
 
-    // AI分析結果のリアルタイム表示
-    function setupAIInsights() {
-        const notebookElements = document.querySelectorAll('[data-notebook-id]');
-        
-        notebookElements.forEach(element => {
-            const notebookId = element.dataset.notebookId;
-            if (notebookId) {
-                loadAIInsights(notebookId, element);
-            }
-        });
-    }
-
-    function loadAIInsights(notebookId, element) {
-        fetch(`/api/insights/${notebookId}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displayAIInsights(data, element);
-                }
-            })
-            .catch(error => {
-                console.error('AI洞察取得エラー:', error);
-            });
-    }
-
-    function displayAIInsights(insights, element) {
-        const aiIndicator = document.createElement('div');
-        aiIndicator.className = 'absolute top-2 right-2 flex items-center gap-1';
-        
-        const depthColor = {
-            'detailed': 'text-green-500',
-            'moderate': 'text-yellow-500',
-            'basic': 'text-gray-500'
-        }[insights.categorization?.analysis_depth] || 'text-gray-500';
-        
-        aiIndicator.innerHTML = `
-            <i data-lucide="brain" class="w-4 h-4 ${depthColor}" aria-hidden="true"></i>
-            <span class="text-xs ${depthColor}" aria-label="AI分析深度: ${insights.categorization?.analysis_depth}">
-                ${insights.categorization?.analysis_depth}
-            </span>
-        `;
-        
-        element.style.position = 'relative';
-        element.appendChild(aiIndicator);
-        
-        if (insights.related_content?.length > 0) {
-            const relatedIndicator = document.createElement('div');
-            relatedIndicator.className = 'text-xs text-blue-600 mt-1';
-            relatedIndicator.innerHTML = `
-                <i data-lucide="link" class="w-3 h-3 inline" aria-hidden="true"></i> 
-                関連: ${insights.related_content.length}件
-            `;
-            element.appendChild(relatedIndicator);
-        }
-        
-        lucide.createIcons();
-    }
-
-    // CSS line-clamp のポリフィル（古いブラウザ対応）
-    function setupLineClamp() {
-        if (!CSS.supports('-webkit-line-clamp', '2')) {
-            document.querySelectorAll('.line-clamp-2').forEach(element => {
-                const lineHeight = parseInt(getComputedStyle(element).lineHeight);
-                element.style.height = `${lineHeight * 2}px`;
-                element.style.overflow = 'hidden';
-            });
-        }
-    }
-
-    // パフォーマンス監視
-    function measurePerformance() {
-        if ('performance' in window) {
-            window.addEventListener('load', () => {
-                const loadTime = performance.now();
-                if (loadTime > 3000) {
-                    console.warn('ページの読み込み時間が長いです:', loadTime, 'ms');
-                }
-            });
-        }
-    }
-
     // DOMロード後に実行
     document.addEventListener('DOMContentLoaded', function() {
         setupAdvancedSearch();
-        setupAIInsights();
-        setupLineClamp();
-        measurePerformance();
+        
+        // アニメーション効果
+        const cards = document.querySelectorAll('.stats-card, .notebook-card');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, index * 100);
+                }
+            });
+        });
+
+        cards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            observer.observe(card);
+        });
     });
 </script>
 

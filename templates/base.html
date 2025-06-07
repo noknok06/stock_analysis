@@ -1,6 +1,6 @@
-<!-- templates/base.html (改良版) -->
+<!-- templates/base.html (ダークモード統一版) -->
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,38 +8,95 @@
     
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        dark: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     
-    <!-- カスタムCSS（BEM規約準拠・アクセシビリティ重視） -->
+    <!-- ダークモード統一CSS -->
     <style>
-        /* ベースコンポーネント（BEM準拠） */
+        /* ベースカラー設定 */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #475569;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+        }
+
+        /* ベーススタイル */
+        html, body {
+            @apply bg-dark-900 text-dark-50;
+            min-height: 100vh;
+            scroll-behavior: smooth;
+        }
+
+        /* カードコンポーネント */
         .app-card {
-            @apply rounded-lg border bg-white shadow-sm transition-shadow duration-200;
+            @apply rounded-xl border border-dark-700 bg-dark-800 shadow-lg transition-all duration-200;
         }
         .app-card:hover {
-            @apply shadow-md;
+            @apply shadow-xl border-dark-600;
         }
         .app-card__header {
-            @apply flex flex-col space-y-1.5 p-4 md:p-6;
+            @apply flex flex-col space-y-1.5 p-4 md:p-6 border-b border-dark-700;
         }
         .app-card__title {
-            @apply text-lg md:text-xl font-semibold leading-none tracking-tight;
+            @apply text-lg md:text-xl font-semibold leading-none tracking-tight text-dark-50;
         }
         .app-card__content {
-            @apply p-4 md:p-6 pt-0;
+            @apply p-4 md:p-6 pt-0 text-dark-100;
         }
         
         /* ボタンコンポーネント */
         .app-btn {
-            @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 touch-manipulation;
+            @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-900 disabled:pointer-events-none disabled:opacity-50 touch-manipulation;
         }
         .app-btn--primary {
-            @apply app-btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 h-9 md:h-10 px-3 md:px-4 py-2;
+            @apply app-btn bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-lg hover:shadow-xl h-9 md:h-10 px-3 md:px-4 py-2;
         }
         .app-btn--secondary {
-            @apply app-btn border border-gray-300 bg-white hover:bg-gray-50 active:bg-gray-100 h-9 md:h-10 px-3 md:px-4 py-2;
+            @apply app-btn border border-dark-600 bg-dark-800 text-dark-100 hover:bg-dark-700 active:bg-dark-600 h-9 md:h-10 px-3 md:px-4 py-2;
         }
         .app-btn--ghost {
-            @apply app-btn hover:bg-gray-100 active:bg-gray-200 h-9 md:h-10 px-3 md:px-4 py-2;
+            @apply app-btn hover:bg-dark-700 active:bg-dark-600 text-dark-200 h-9 md:h-10 px-3 md:px-4 py-2;
         }
         .app-btn--sm {
             @apply h-8 rounded-md px-2 md:px-3 text-xs md:text-sm;
@@ -50,86 +107,174 @@
         
         /* フォームコンポーネント */
         .app-input {
-            @apply flex h-10 md:h-12 w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+            @apply flex h-10 md:h-12 w-full rounded-lg border border-dark-600 bg-dark-800 px-3 md:px-4 py-2 text-sm md:text-base text-dark-50 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
         }
         .app-textarea {
-            @apply flex min-h-[120px] md:min-h-[150px] w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-vertical text-left;
+            @apply flex min-h-[120px] md:min-h-[150px] w-full rounded-lg border border-dark-600 bg-dark-800 px-3 md:px-4 py-2 text-sm md:text-base text-dark-50 placeholder:text-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 resize-vertical text-left;
         }
         .app-select {
-            @apply flex h-10 md:h-12 w-full rounded-md border border-gray-300 bg-white px-3 md:px-4 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+            @apply flex h-10 md:h-12 w-full rounded-lg border border-dark-600 bg-dark-800 px-3 md:px-4 py-2 text-sm md:text-base text-dark-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200;
         }
-        /* テキストの左寄せを強制 */
-        .entry-card__content, .risk-factors, .investment-goal {
-            text-align: left !important;
-        }
-
-        /* フォーム要素の幅確保 */
-        .form-field .app-input, 
-        .form-field .app-textarea, 
-        .form-field .app-select {
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-
-        /* エディターの幅調整 */
-        .editor-container {
-            width: 100% !important;
-        }
-
-        .editor-container textarea {
-            width: 100% !important;
-            min-width: 100% !important;
-        }        
+        
         /* バッジコンポーネント */
         .app-badge {
             @apply inline-flex items-center rounded-full px-2 md:px-2.5 py-0.5 md:py-1 text-xs md:text-sm font-semibold transition-colors;
         }
         .app-badge--primary {
-            @apply app-badge bg-blue-600 text-white;
+            @apply app-badge bg-primary-600 text-white;
         }
         .app-badge--secondary {
-            @apply app-badge bg-gray-100 text-gray-900;
+            @apply app-badge bg-dark-700 text-dark-200;
         }
         .app-badge--outline {
-            @apply app-badge border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 cursor-pointer;
+            @apply app-badge border border-dark-600 bg-transparent text-dark-300 hover:bg-dark-700 cursor-pointer;
+        }
+        .app-badge--success {
+            @apply app-badge bg-green-600 text-white;
+        }
+        .app-badge--warning {
+            @apply app-badge bg-yellow-600 text-white;
+        }
+        .app-badge--danger {
+            @apply app-badge bg-red-600 text-white;
+        }
+        
+        /* ナビゲーション */
+        .app-navigation {
+            @apply bg-dark-800 border-b border-dark-700 backdrop-blur-sm;
+        }
+        .nav-link {
+            @apply relative text-dark-300 hover:text-dark-50 hover:bg-dark-700;
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link:hover {
+            @apply transform scale-105;
+        }
+        .nav-link[aria-current="page"] {
+            @apply bg-primary-600 text-white;
+        }
+        .nav-link[aria-current="page"]::after {
+            content: '';
+            @apply absolute bottom-0 left-1/2 w-1/2 h-0.5 bg-primary-400 rounded-full;
+            transform: translateX(-50%);
         }
         
         /* モバイルメニュー */
         .mobile-menu {
-            @apply fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300;
+            @apply fixed inset-0 z-50 lg:hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .mobile-menu__backdrop {
+            @apply fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm;
         }
         .mobile-menu__panel {
-            @apply fixed right-0 top-0 h-auto max-h-screen w-80 max-w-[90vw] bg-white shadow-xl transform transition-transform duration-300 ease-out overflow-y-auto;
-        }
-
-        /* PC版では幅を調整 */
-        @media (min-width: 768px) {
-            .mobile-menu__panel {
-                @apply w-96 h-auto max-h-[80vh] top-4 right-4 rounded-lg;
-            }
-            .mobile-menu {
-                @apply bg-transparent;
-            }
+            @apply fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-dark-800 border-l border-dark-700 shadow-2xl overflow-y-auto;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
         }
         .mobile-menu--hidden {
-            @apply opacity-0 pointer-events-none;
+            @apply opacity-0 invisible pointer-events-none;
         }
         .mobile-menu--hidden .mobile-menu__panel {
-            @apply translate-x-full;
+            transform: translateX(100%);
+        }
+        .mobile-menu:not(.mobile-menu--hidden) .mobile-menu__panel {
+            transform: translateX(0);
+        }
+        .mobile-menu-item {
+            @apply block w-full text-left text-dark-200 hover:text-dark-50 hover:bg-dark-700;
+            min-height: 48px;
+            transition: all 0.2s ease-in-out;
+        }
+        .mobile-menu-item:active {
+            @apply transform scale-95;
+        }
+        
+        /* メッセージ */
+        .app-message {
+            @apply rounded-lg p-4 mb-4 flex items-start gap-3 border;
+        }
+        .app-message--success {
+            @apply bg-green-900 border-green-700 text-green-100;
+        }
+        .app-message--error {
+            @apply bg-red-900 border-red-700 text-red-100;
+        }
+        .app-message--warning {
+            @apply bg-yellow-900 border-yellow-700 text-yellow-100;
+        }
+        .app-message--info {
+            @apply bg-blue-900 border-blue-700 text-blue-100;
+        }
+        
+        /* フッター */
+        .app-footer {
+            @apply bg-dark-800 border-t border-dark-700 text-dark-300;
+        }
+        
+        /* スクロールバー */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            @apply bg-dark-900;
+        }
+        ::-webkit-scrollbar-thumb {
+            @apply bg-dark-600 rounded-full;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            @apply bg-dark-500;
+        }
+        
+        /* テキスト選択 */
+        ::selection {
+            @apply bg-primary-600 text-white;
+        }
+        
+        /* フォーカス表示の改善 */
+        .nav-link:focus,
+        .mobile-menu-item:focus,
+        .app-btn:focus {
+            @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-dark-900;
+        }
+        
+        /* アニメーション */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite;
         }
         
         /* レスポンシブ調整 */
         @media (max-width: 640px) {
+            .app-navigation {
+                @apply h-12;
+            }
             .touch-friendly {
                 min-height: 44px;
                 min-width: 44px;
             }
         }
         
-        /* ダークモード対応 */
-        @media (prefers-color-scheme: dark) {
+        /* アクセシビリティ */
+        @media (prefers-reduced-motion: reduce) {
+            .mobile-menu,
+            .mobile-menu__panel,
+            .nav-link,
+            .app-btn {
+                transition: none;
+            }
+        }
+        
+        /* 高コントラストモード */
+        @media (prefers-contrast: high) {
             .app-card {
-                @apply bg-gray-800 border-gray-700 text-white;
+                @apply border-2 border-dark-500;
+            }
+            .app-btn--primary {
+                @apply bg-primary-500 border-2 border-primary-400;
             }
         }
     </style>
@@ -137,50 +282,76 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
-<body class="min-h-screen bg-gray-50 antialiased">
+<body class="min-h-screen bg-dark-900 text-dark-50 antialiased">
     <!-- ナビゲーションヘッダー -->
-    <nav class="app-navigation bg-white border-b border-gray-200 sticky top-0 z-40" role="navigation" aria-label="メインナビゲーション">
+    <nav class="app-navigation sticky top-0 z-40" role="navigation" aria-label="メインナビゲーション">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14 md:h-16">
                 <!-- ロゴ・ホームリンク -->
-                <div class="app-navigation__brand flex items-center">
-                    <a href="{% url 'dashboard' %}" class="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 touch-friendly">
-                        <span role="img" aria-label="チャートアイコン">📊</span>
-                        <span class="hidden xs:inline">株式分析記録</span>
-                        <span class="xs:hidden">株式分析</span>
+                <div class="app-navigation__brand flex items-center flex-shrink-0">
+                    <a href="{% url 'dashboard' %}" class="text-lg md:text-xl font-bold text-dark-50 flex items-center gap-2 hover:text-primary-400 transition-colors">
+                        <span role="img" aria-label="チャートアイコン" class="text-2xl">📊</span>
+                        <span class="hidden sm:inline">株式分析記録</span>
+                        <span class="sm:hidden">分析記録</span>
                     </a>
                 </div>
                 
                 <!-- デスクトップナビゲーション -->
-                <div class="app-navigation__desktop hidden md:flex items-center space-x-4">
+                <div class="app-navigation__desktop hidden lg:flex items-center space-x-1">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'notebook_list' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors" aria-current="{% if request.resolver_match.url_name == 'notebook_list' %}page{% endif %}">
+                        <a href="{% url 'notebook_list' %}" 
+                           class="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.resolver_match.url_name == 'notebook_list' %}bg-primary-600 text-white{% endif %}"
+                           aria-current="{% if request.resolver_match.url_name == 'notebook_list' %}page{% endif %}">
+                            <i data-lucide="book-open" class="w-4 h-4 inline-block mr-1" aria-hidden="true"></i>
                             ノート一覧
                         </a>
-                        <a href="{% url 'calculator' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors" aria-current="{% if request.resolver_match.url_name == 'calculator' %}page{% endif %}">
+                        <a href="{% url 'calculator' %}" 
+                           class="nav-link px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.resolver_match.url_name == 'calculator' %}bg-primary-600 text-white{% endif %}"
+                           aria-current="{% if request.resolver_match.url_name == 'calculator' %}page{% endif %}">
+                            <i data-lucide="calculator" class="w-4 h-4 inline-block mr-1" aria-hidden="true"></i>
                             計算ツール
                         </a>
-                        <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary">
+                    {% endif %}
+                </div>
+
+                <!-- 右側アクション（PC） -->
+                <div class="app-navigation__actions flex items-center space-x-2">
+                    {% if user.is_authenticated %}
+                        <!-- 新規ノートボタン -->
+                        <a href="{% url 'notebook_create' %}" class="app-btn app-btn--primary hidden sm:flex">
                             <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
-                            <span class="hidden sm:inline">新規ノート</span>
-                            <span class="sm:hidden">新規</span>
+                            <span class="hidden md:inline ml-2">新規ノート</span>
                         </a>
-                        <div class="app-navigation__user flex items-center gap-2">
-                            <span class="text-sm text-gray-600 hidden lg:inline">{{ user.username }}</span>
-                            <a href="{% url 'logout' %}" class="text-gray-400 hover:text-gray-600 p-1" aria-label="ログアウト">
+                        
+                        <!-- ユーザーメニュー（PC） -->
+                        <div class="app-navigation__user hidden lg:flex items-center space-x-3">
+                            <div class="text-sm text-dark-300">
+                                <span class="hidden xl:inline">ようこそ、</span>{{ user.username }}
+                            </div>
+                            <a href="{% url 'logout' %}" 
+                               class="text-dark-400 hover:text-red-400 p-2 rounded-lg hover:bg-dark-700 transition-all duration-200" 
+                               aria-label="ログアウト"
+                               title="ログアウト">
                                 <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
                             </a>
                         </div>
                     {% else %}
-                        <a href="{% url 'login' %}" class="app-btn app-btn--secondary">ログイン</a>
-                        <a href="{% url 'register' %}" class="app-btn app-btn--primary">新規登録</a>
+                        <!-- 未ログイン時のボタン -->
+                        <div class="hidden sm:flex items-center space-x-2">
+                            <a href="{% url 'login' %}" class="app-btn app-btn--secondary">
+                                <i data-lucide="log-in" class="w-4 h-4" aria-hidden="true"></i>
+                                <span class="hidden md:inline ml-2">ログイン</span>
+                            </a>
+                            <a href="{% url 'register' %}" class="app-btn app-btn--primary">
+                                <i data-lucide="user-plus" class="w-4 h-4" aria-hidden="true"></i>
+                                <span class="hidden md:inline ml-2">新規登録</span>
+                            </a>
+                        </div>
                     {% endif %}
-                </div>
-                
-                <!-- モバイルメニューボタン -->
-                <div class="app-navigation__mobile md:hidden">
+                    
+                    <!-- モバイルメニューボタン -->
                     <button type="button" 
-                            class="app-btn app-btn--ghost p-2 touch-friendly" 
+                            class="app-navigation__mobile-toggle lg:hidden p-2 rounded-lg text-dark-300 hover:text-dark-50 hover:bg-dark-700 transition-all duration-200" 
                             aria-label="メニューを開く"
                             aria-expanded="false"
                             aria-controls="mobile-menu"
@@ -193,13 +364,18 @@
     </nav>
 
     <!-- モバイルメニュー -->
-    <div id="mobile-menu" class="mobile-menu mobile-menu--hidden" aria-hidden="true">
+    <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
+        <div class="mobile-menu__backdrop" onclick="toggleMobileMenu()"></div>
         <div class="mobile-menu__panel">
-            <div class="p-4 border-b border-gray-200">
+            <!-- メニューヘッダー -->
+            <div class="mobile-menu__header px-4 py-3 border-b border-dark-700 bg-dark-700">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold">メニュー</h2>
+                    <div class="flex items-center gap-2">
+                        <span role="img" aria-label="チャートアイコン" class="text-xl">📊</span>
+                        <h2 class="text-lg font-semibold text-dark-50">株式分析記録</h2>
+                    </div>
                     <button type="button" 
-                            class="app-btn app-btn--ghost p-2 touch-friendly" 
+                            class="p-2 rounded-lg text-dark-300 hover:text-dark-50 hover:bg-dark-600 transition-all duration-200" 
                             aria-label="メニューを閉じる"
                             onclick="toggleMobileMenu()">
                         <i data-lucide="x" class="w-6 h-6" aria-hidden="true"></i>
@@ -207,69 +383,111 @@
                 </div>
             </div>
             
-            <nav class="p-4" role="navigation" aria-label="モバイルメニュー">
+            <!-- メニューコンテンツ -->
+            <nav class="mobile-menu__content p-4" role="navigation" aria-label="モバイルメニュー">
                 {% if user.is_authenticated %}
-                    <div class="space-y-2">
-                        <a href="{% url 'dashboard' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                            <i data-lucide="home" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
-                            ダッシュボード
-                        </a>
-                        <a href="{% url 'notebook_list' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                            <i data-lucide="book-open" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
-                            ノート一覧
-                        </a>
-                        <a href="{% url 'calculator' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                            <i data-lucide="calculator" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
-                            計算ツール
-                        </a>
-                        <a href="{% url 'notebook_create' %}" class="block px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors">
-                            <i data-lucide="plus" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
-                            新規ノート作成
-                        </a>
-                    </div>
-                    
-                    <div class="mt-6 pt-6 border-t border-gray-200">
-                        <div class="px-4 py-2 text-sm text-gray-600">
-                            ログイン中: {{ user.username }}
+                    <!-- ユーザー情報 -->
+                    <div class="user-info mb-6 p-3 bg-primary-900 border border-primary-700 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+                                <i data-lucide="user" class="w-5 h-5 text-white" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-dark-50">{{ user.username }}</div>
+                                <div class="text-sm text-dark-300">投資家</div>
+                            </div>
                         </div>
-                        <a href="{% url 'logout' %}" class="block px-4 py-3 text-red-600 hover:bg-red-50 rounded-md transition-colors">
-                            <i data-lucide="log-out" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
-                            ログアウト
-                        </a>
+                    </div>
+
+                    <!-- メインメニュー -->
+                    <div class="menu-section mb-6">
+                        <h3 class="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3">メインメニュー</h3>
+                        <div class="space-y-1">
+                            <a href="{% url 'dashboard' %}" 
+                               class="mobile-menu-item flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'dashboard' %}bg-primary-600 text-white{% else %}hover:bg-dark-700{% endif %}"
+                               onclick="toggleMobileMenu()">
+                                <i data-lucide="home" class="w-5 h-5" aria-hidden="true"></i>
+                                <span class="font-medium">ダッシュボード</span>
+                            </a>
+                            <a href="{% url 'notebook_list' %}" 
+                               class="mobile-menu-item flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'notebook_list' %}bg-primary-600 text-white{% else %}hover:bg-dark-700{% endif %}"
+                               onclick="toggleMobileMenu()">
+                                <i data-lucide="book-open" class="w-5 h-5" aria-hidden="true"></i>
+                                <span class="font-medium">ノート一覧</span>
+                            </a>
+                            <a href="{% url 'calculator' %}" 
+                               class="mobile-menu-item flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.url_name == 'calculator' %}bg-primary-600 text-white{% else %}hover:bg-dark-700{% endif %}"
+                               onclick="toggleMobileMenu()">
+                                <i data-lucide="calculator" class="w-5 h-5" aria-hidden="true"></i>
+                                <span class="font-medium">計算ツール</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- アクションメニュー -->
+                    <div class="menu-section mb-6">
+                        <h3 class="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3">アクション</h3>
+                        <div class="space-y-1">
+                            <a href="{% url 'notebook_create' %}" 
+                               class="mobile-menu-item flex items-center gap-3 px-3 py-3 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-all duration-200"
+                               onclick="toggleMobileMenu()">
+                                <i data-lucide="plus" class="w-5 h-5" aria-hidden="true"></i>
+                                <span class="font-medium">新規ノート作成</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- システムメニュー -->
+                    <div class="menu-section">
+                        <h3 class="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3">アカウント</h3>
+                        <div class="space-y-1">
+                            <a href="{% url 'logout' %}" 
+                               class="mobile-menu-item flex items-center gap-3 px-3 py-3 text-red-400 hover:bg-red-900 hover:text-red-300 rounded-lg transition-all duration-200">
+                                <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
+                                <span class="font-medium">ログアウト</span>
+                            </a>
+                        </div>
                     </div>
                 {% else %}
-                    <div class="space-y-2">
-                        <a href="{% url 'login' %}" class="block px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                            <i data-lucide="log-in" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
-                            ログイン
-                        </a>
-                        <a href="{% url 'register' %}" class="block px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors">
-                            <i data-lucide="user-plus" class="w-5 h-5 inline mr-3" aria-hidden="true"></i>
-                            新規登録
-                        </a>
+                    <!-- 未ログイン時のメニュー -->
+                    <div class="space-y-4">
+                        <div class="text-center p-4">
+                            <h3 class="text-lg font-semibold text-dark-50 mb-2">株式分析記録アプリ</h3>
+                            <p class="text-sm text-dark-300">投資判断を記録・追跡して<br>投資スキルを向上させましょう</p>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <a href="{% url 'login' %}" 
+                               class="mobile-menu-item flex items-center justify-center gap-3 px-4 py-3 border border-dark-600 hover:bg-dark-700 rounded-lg transition-all duration-200"
+                               onclick="toggleMobileMenu()">
+                                <i data-lucide="log-in" class="w-5 h-5" aria-hidden="true"></i>
+                                <span class="font-medium">ログイン</span>
+                            </a>
+                            <a href="{% url 'register' %}" 
+                               class="mobile-menu-item flex items-center justify-center gap-3 px-4 py-3 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-all duration-200"
+                               onclick="toggleMobileMenu()">
+                                <i data-lucide="user-plus" class="w-5 h-5" aria-hidden="true"></i>
+                                <span class="font-medium">新規登録</span>
+                            </a>
+                        </div>
                     </div>
                 {% endif %}
             </nav>
         </div>
     </div>
 
-    <!-- メッセージ表示（アクセシビリティ対応） -->
+    <!-- メッセージ表示 -->
     {% if messages %}
         <div class="app-messages max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4" role="alert" aria-live="polite">
             {% for message in messages %}
-                <div class="app-message app-message--{{ message.tags }} rounded-lg p-4 mb-4 flex items-start gap-3
-                    {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800
-                    {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800
-                    {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800
-                    {% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
-                    
+                <div class="app-message app-message--{{ message.tags }}">
                     <i data-lucide="{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}alert-circle{% elif message.tags == 'warning' %}alert-triangle{% else %}info{% endif %}" 
                        class="w-5 h-5 mt-0.5 flex-shrink-0" aria-hidden="true"></i>
                     
                     <div class="flex-1">{{ message }}</div>
                     
                     <button type="button" 
-                            class="flex-shrink-0 p-1 hover:bg-black hover:bg-opacity-10 rounded transition-colors" 
+                            class="flex-shrink-0 p-1 hover:bg-black hover:bg-opacity-20 rounded transition-colors" 
                             aria-label="メッセージを閉じる"
                             onclick="this.parentElement.style.display='none'">
                         <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
@@ -285,16 +503,16 @@
     </main>
 
     <!-- フッター -->
-    <footer class="app-footer bg-white border-t border-gray-200 mt-12" role="contentinfo">
+    <footer class="app-footer mt-12" role="contentinfo">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="text-center text-sm text-gray-600">
+            <div class="text-center text-sm">
                 <p>&copy; 2024 株式分析記録アプリ. All rights reserved.</p>
                 <p class="mt-2">
-                    <a href="#" class="hover:text-gray-900 transition-colors">プライバシーポリシー</a>
+                    <a href="#" class="hover:text-primary-400 transition-colors">プライバシーポリシー</a>
                     <span class="mx-2">|</span>
-                    <a href="#" class="hover:text-gray-900 transition-colors">利用規約</a>
+                    <a href="#" class="hover:text-primary-400 transition-colors">利用規約</a>
                     <span class="mx-2">|</span>
-                    <a href="#" class="hover:text-gray-900 transition-colors">お問い合わせ</a>
+                    <a href="#" class="hover:text-primary-400 transition-colors">お問い合わせ</a>
                 </p>
             </div>
         </div>
@@ -305,31 +523,54 @@
         // Lucide icons の初期化
         lucide.createIcons();
         
-        // モバイルメニューの制御
+        // モバイルメニューの制御（改善版）
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
-            const button = document.querySelector('[aria-controls="mobile-menu"]');
+            const button = document.querySelector('.app-navigation__mobile-toggle');
             const isHidden = menu.classList.contains('mobile-menu--hidden');
             
             if (isHidden) {
+                // メニューを開く
                 menu.classList.remove('mobile-menu--hidden');
                 menu.setAttribute('aria-hidden', 'false');
                 button.setAttribute('aria-expanded', 'true');
                 button.setAttribute('aria-label', 'メニューを閉じる');
-                // フォーカストラップ
-                trapFocus(menu);
+                
                 // スクロール防止
                 document.body.style.overflow = 'hidden';
+                
+                // フォーカストラップ
+                trapFocus(menu);
+                
+                // アイコンをバツマークに変更
+                const icon = button.querySelector('i');
+                icon.setAttribute('data-lucide', 'x');
+                lucide.createIcons();
             } else {
-                menu.classList.add('mobile-menu--hidden');
-                menu.setAttribute('aria-hidden', 'true');
-                button.setAttribute('aria-expanded', 'false');
-                button.setAttribute('aria-label', 'メニューを開く');
-                // スクロール復元
-                document.body.style.overflow = '';
-                // フォーカスを戻す
-                button.focus();
+                // メニューを閉じる
+                closeMenu();
             }
+        }
+        
+        function closeMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('.app-navigation__mobile-toggle');
+            
+            menu.classList.add('mobile-menu--hidden');
+            menu.setAttribute('aria-hidden', 'true');
+            button.setAttribute('aria-expanded', 'false');
+            button.setAttribute('aria-label', 'メニューを開く');
+            
+            // スクロール復元
+            document.body.style.overflow = '';
+            
+            // フォーカスを戻す
+            button.focus();
+            
+            // アイコンをハンバーガーに戻す
+            const icon = button.querySelector('i');
+            icon.setAttribute('data-lucide', 'menu');
+            lucide.createIcons();
         }
         
         // フォーカストラップ（アクセシビリティ）
@@ -357,7 +598,11 @@
             }
             
             element.addEventListener('keydown', handleTabKey);
-            firstElement.focus();
+            
+            // 最初の要素にフォーカス
+            setTimeout(() => {
+                if (firstElement) firstElement.focus();
+            }, 100);
         }
         
         // ESCキーでモバイルメニューを閉じる
@@ -365,16 +610,22 @@
             if (e.key === 'Escape') {
                 const menu = document.getElementById('mobile-menu');
                 if (!menu.classList.contains('mobile-menu--hidden')) {
-                    toggleMobileMenu();
+                    closeMenu();
                 }
             }
         });
         
-        // モバイルメニューの背景クリックで閉じる
-        document.getElementById('mobile-menu').addEventListener('click', function(e) {
-            if (e.target === this) {
-                toggleMobileMenu();
+        // ウィンドウリサイズ時の処理
+        window.addEventListener('resize', function() {
+            // PC表示になった時にモバイルメニューを閉じる
+            if (window.innerWidth >= 1024) { // lg breakpoint
+                closeMenu();
             }
+        });
+        
+        // ページ遷移時にメニューを閉じる
+        window.addEventListener('beforeunload', function() {
+            closeMenu();
         });
         
         // インライン検索機能
@@ -425,12 +676,12 @@
             const searchResults = document.getElementById('search-results');
             
             if (results.length === 0) {
-                searchResults.innerHTML = '<div class="p-4 text-center text-gray-500">検索結果がありません</div>';
+                searchResults.innerHTML = '<div class="p-4 text-center text-dark-400">検索結果がありません</div>';
             } else {
                 searchResults.innerHTML = results.map(result => `
-                    <a href="${result.url}" class="block p-3 hover:bg-gray-50 border-b last:border-b-0 focus:bg-gray-50 focus:outline-none">
-                        <div class="font-semibold">${result.title}</div>
-                        <div class="text-sm text-gray-600">${result.subtitle}</div>
+                    <a href="${result.url}" class="block p-3 hover:bg-dark-700 border-b border-dark-700 last:border-b-0 focus:bg-dark-700 focus:outline-none transition-colors">
+                        <div class="font-semibold text-dark-100">${result.title}</div>
+                        <div class="text-sm text-dark-300">${result.subtitle}</div>
                         <div class="flex gap-1 mt-1">
                             ${result.tags.slice(0, 3).map(tag => 
                                 `<span class="app-badge app-badge--outline text-xs">#${tag}</span>`
