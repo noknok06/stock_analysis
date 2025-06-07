@@ -1,4 +1,4 @@
-# notebooks/views.py
+# notebooks/views.py（AI機能統合版）
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -17,7 +17,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .ai_analyzer import StockAnalysisAI
 from .calculators import InvestmentCalculator
+from .semantic_search import SemanticSearchEngine
 from .utils import get_market_data_cache
+
 
 def dashboard_view(request):
     """統合ダッシュボード"""
@@ -65,6 +67,7 @@ def dashboard_view(request):
     }
     return render(request, 'notebooks/dashboard.html', context)
 
+
 @login_required
 def notebook_list_view(request):
     """ノート一覧"""
@@ -91,6 +94,7 @@ def notebook_list_view(request):
     }
     return render(request, 'notebooks/list.html', context)
 
+
 @login_required
 def notebook_create_view(request):
     """ノート作成"""
@@ -99,6 +103,10 @@ def notebook_create_view(request):
         if form.is_valid():
             try:
                 notebook = form.save(user=request.user)
+                
+                # AI分析の実行（バックグラウンド）
+                perform_ai_analysis_for_notebook(notebook)
+                
                 messages.success(request, f'ノート「{notebook.title}」を作成しました。')
                 return redirect('notebook_detail', pk=notebook.pk)
             except Exception as e:
@@ -120,6 +128,7 @@ def notebook_create_view(request):
     }
     return render(request, 'notebooks/create.html', context)
 
+
 @login_required
 def notebook_detail_view(request, pk):
     """ノート詳細"""
@@ -137,6 +146,7 @@ def notebook_detail_view(request, pk):
     }
     return render(request, 'notebooks/detail.html', context)
 
+
 @login_required
 def notebook_edit_view(request, pk):
     """ノート編集"""
@@ -147,6 +157,10 @@ def notebook_edit_view(request, pk):
         if form.is_valid():
             try:
                 notebook = form.save()
+                
+                # AI分析の再実行
+                perform_ai_analysis_for_notebook(notebook)
+                
                 messages.success(request, f'ノート「{notebook.title}」を更新しました。')
                 return redirect('notebook_detail', pk=notebook.pk)
             except Exception as e:
@@ -159,6 +173,7 @@ def notebook_edit_view(request, pk):
         'notebook': notebook,
     }
     return render(request, 'notebooks/edit.html', context)
+
 
 @login_required
 def entry_create_view(request, notebook_pk):
@@ -174,9 +189,15 @@ def entry_create_view(request, notebook_pk):
                 entry.save()
                 form.save_m2m()
                 
+                # AI分析の実行
+                perform_ai_analysis_for_entry(entry)
+                
                 # ノートのエントリー数更新
                 notebook.entry_count = notebook.entries.count()
                 notebook.save()
+                
+                # ノート全体のAI分析も更新
+                perform_ai_analysis_for_notebook(notebook)
                 
                 messages.success(request, 'エントリーを作成しました。')
                 return redirect('notebook_detail', pk=notebook.pk)
@@ -190,6 +211,7 @@ def entry_create_view(request, notebook_pk):
         'notebook': notebook,
     }
     return render(request, 'notebooks/entry_create.html', context)
+
 
 def search_api_view(request):
     """検索API（AJAX用）"""
@@ -220,6 +242,7 @@ def search_api_view(request):
     
     return JsonResponse({'results': results})
 
+
 @login_required
 def calculator_view(request):
     """投資計算ツールページ"""
@@ -227,6 +250,7 @@ def calculator_view(request):
         'page_title': '投資計算ツール',
     }
     return render(request, 'notebooks/calculator.html', context)
+
 
 def register_view(request):
     """ユーザー登録"""
@@ -246,6 +270,7 @@ def register_view(request):
     
     return render(request, 'registration/register.html', {'form': form})
 
+
 class CustomLoginView(auth_views.LoginView):
     """カスタムログインビュー"""
     template_name = 'registration/login.html'
@@ -257,9 +282,85 @@ class CustomLoginView(auth_views.LoginView):
         messages.error(self.request, 'ユーザー名またはパスワードが正しくありません。')
         return super().form_invalid(form)
 
+
 class CustomLogoutView(auth_views.LogoutView):
     """カスタムログアウトビュー"""
     
     def dispatch(self, request, *args, **kwargs):
         messages.success(request, 'ログアウトしました。')
         return super().dispatch(request, *args, **kwargs)
+
+
+# AI分析機能
+def perform_ai_analysis_for_notebook(notebook):
+    """ノートブック全体のAI分析実行"""
+    try:
+        search_engine = SemanticSearchEngine()
+        full_text = search_engine._extract_full_text(notebook)
+        
+        if len(full_text.strip()) > 20:  # 最小文字数チェック
+            analyzer = StockAnalysisAI()
+            analysis = analyzer.analyze_content(full_text, notebook.title)
+            
+            # AI分析結果を保存
+            notebook.update_ai_analysis(analysis)
+            
+            # AI推奨タグの自動追加（オプション）
+            suggested_tags = analysis.get('suggested_tags', [])
+            current_tags = set(tag.name for tag in notebook.tags.all())
+            
+            # 新しいタグを最大3個まで追加
+            new_tags = [tag for tag in suggested_tags[:3] if tag not in current_tags]
+            if new_tags:
+                notebook.tags.add(*new_tags)
+    
+    except Exception as e:
+        # ログ出力（本番環境では適切なロギング設定が必要）
+        print(f"AI分析エラー (ノートブック {notebook.pk}): {str(e)}")
+
+
+def perform_ai_analysis_for_entry(entry):
+    """エントリーのAI分析実行"""
+    try:
+        if len(entry.content.strip()) > 10:  # 最小文字数チェック
+            analyzer = StockAnalysisAI()
+            analysis = analyzer.analyze_content(entry.content, entry.title)
+            
+            # AI分析結果を保存
+            entry.update_ai_analysis(analysis)
+            
+            # AI推奨タグの自動追加（オプション）
+            suggested_tags = analysis.get('suggested_tags', [])
+            current_tags = set(tag.name for tag in entry.tags.all())
+            
+            # 新しいタグを最大2個まで追加
+            new_tags = [tag for tag in suggested_tags[:2] if tag not in current_tags]
+            if new_tags:
+                entry.tags.add(*new_tags)
+    
+    except Exception as e:
+        # ログ出力（本番環境では適切なロギング設定が必要）
+        print(f"AI分析エラー (エントリー {entry.pk}): {str(e)}")
+
+
+# AI機能のバッチ処理（管理コマンド用）
+def batch_ai_analysis_for_user(user_id, force_update=False):
+    """ユーザーの全ノートブックにAI分析を実行"""
+    try:
+        user_notebooks = Notebook.objects.filter(user_id=user_id)
+        
+        for notebook in user_notebooks:
+            # 強制更新か、AI分析がない場合のみ実行
+            if force_update or not notebook.ai_last_analyzed:
+                perform_ai_analysis_for_notebook(notebook)
+                
+                # エントリーも分析
+                for entry in notebook.entries.all():
+                    if force_update or not entry.ai_analysis_cache:
+                        perform_ai_analysis_for_entry(entry)
+        
+        return True
+    
+    except Exception as e:
+        print(f"バッチAI分析エラー (ユーザー {user_id}): {str(e)}")
+        return False

@@ -21,7 +21,11 @@ urlpatterns = [
     
     # API エンドポイント
     path('api/search/', api_views.search_notebooks_api, name='search_api'),
+    path('api/search/semantic/', api_views.semantic_search_api, name='semantic_search_api'),
     path('api/ai/analyze/', api_views.ai_analyze_content_api, name='ai_analyze_api'),
+    path('api/ai/categorize/', api_views.auto_categorize_api, name='auto_categorize_api'),
+    path('api/related/<uuid:notebook_id>/', api_views.related_content_api, name='related_content_api'),
+    path('api/insights/<uuid:notebook_id>/', api_views.ai_insights_api, name='ai_insights_api'),
     path('api/calculate/', api_views.calculate_investment_api, name='calculate_api'),
     path('api/stats/', api_views.dashboard_stats_api, name='stats_api'),
     

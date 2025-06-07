@@ -185,6 +185,81 @@
                 </div>
             </div>
 
+            <!-- AI洞察・関連コンテンツ -->
+            <div class="tw-card border-blue-200 bg-blue-50">
+                <div class="tw-card-header">
+                    <h3 class="tw-card-title flex items-center gap-2 text-blue-900">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        AI洞察・推奨
+                    </h3>
+                </div>
+                <div class="tw-card-content">
+                    <div id="ai-insights-loading" class="text-center py-4">
+                        <div class="inline-flex items-center gap-2 text-blue-600">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <span>AI分析中...</span>
+                        </div>
+                    </div>
+                    <div id="ai-insights-content" class="hidden space-y-4">
+                        <!-- AI分析結果 -->
+                        <div class="bg-white rounded-lg p-3">
+                            <h4 class="font-medium text-blue-800 mb-2">自動分類結果</h4>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <span class="text-gray-600">投資戦略:</span>
+                                    <span class="ml-1 font-medium" id="investment-strategy">-</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">分析深度:</span>
+                                    <span class="ml-1 font-medium" id="analysis-depth">-</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">コンテンツ種別:</span>
+                                    <span class="ml-1 font-medium" id="content-type">-</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">分類信頼度:</span>
+                                    <span class="ml-1 font-medium" id="classification-confidence">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 関連コンテンツ -->
+                        <div class="bg-white rounded-lg p-3" id="related-content-section">
+                            <h4 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                                <i data-lucide="link" class="w-4 h-4"></i>
+                                関連するノート
+                            </h4>
+                            <div id="related-content-list" class="space-y-2">
+                                <!-- 関連コンテンツがここに動的に追加される -->
+                            </div>
+                        </div>
+
+                        <!-- 改善提案 -->
+                        <div class="bg-white rounded-lg p-3" id="improvement-suggestions-section">
+                            <h4 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                                <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                                改善提案
+                            </h4>
+                            <div id="improvement-suggestions-list" class="space-y-2">
+                                <!-- 改善提案がここに動的に追加される -->
+                            </div>
+                        </div>
+
+                        <!-- 推奨アクション -->
+                        <div class="bg-white rounded-lg p-3" id="recommended-actions-section">
+                            <h4 class="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                                <i data-lucide="zap" class="w-4 h-4"></i>
+                                推奨アクション
+                            </h4>
+                            <div id="recommended-actions-list" class="space-y-1">
+                                <!-- 推奨アクションがここに動的に追加される -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- クイック計算 -->
             <div class="tw-card">
                 <div class="tw-card-header">
@@ -211,4 +286,176 @@
         </div>
     </div>
 </div>
+
+<script>
+// AI洞察データの読み込み
+document.addEventListener('DOMContentLoaded', function() {
+    loadAIInsights();
+    
+    // Lucide icons の初期化
+    lucide.createIcons();
+});
+
+function loadAIInsights() {
+    const notebookId = '{{ notebook.pk }}';
+    
+    fetch(`/api/insights/${notebookId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAIInsights(data);
+            } else {
+                showInsightsError(data.error || '不明なエラー');
+            }
+        })
+        .catch(error => {
+            console.error('AI洞察読み込みエラー:', error);
+            showInsightsError('ネットワークエラー');
+        });
+}
+
+function displayAIInsights(insights) {
+    // ローディング非表示、コンテンツ表示
+    document.getElementById('ai-insights-loading').classList.add('hidden');
+    document.getElementById('ai-insights-content').classList.remove('hidden');
+    
+    // 自動分類結果表示
+    displayClassificationResults(insights.categorization);
+    
+    // 関連コンテンツ表示
+    displayRelatedContent(insights.related_content);
+    
+    // 改善提案表示
+    displayImprovementSuggestions(insights.improvement_suggestions);
+    
+    // 推奨アクション表示
+    displayRecommendedActions(insights.categorization.recommended_actions);
+    
+    // アイコン再初期化
+    lucide.createIcons();
+}
+
+function displayClassificationResults(categorization) {
+    const strategyLabels = {
+        'dividend_income': '配当収入',
+        'growth_investing': '成長投資',
+        'value_investing': 'バリュー投資',
+        'short_term_trading': '短期取引',
+        'long_term_holding': '長期保有',
+        'diversified': '分散投資'
+    };
+    
+    const depthLabels = {
+        'detailed': '詳細',
+        'moderate': '中程度',
+        'basic': '基本'
+    };
+    
+    const typeLabels = {
+        'earnings_analysis': '決算分析',
+        'news_analysis': 'ニュース分析',
+        'technical_analysis': 'テクニカル分析',
+        'fundamental_analysis': 'ファンダメンタル分析',
+        'calculation': '計算',
+        'risk_analysis': 'リスク分析',
+        'general_memo': '一般メモ'
+    };
+    
+    document.getElementById('investment-strategy').textContent = 
+        strategyLabels[categorization.investment_strategy] || categorization.investment_strategy;
+    document.getElementById('analysis-depth').textContent = 
+        depthLabels[categorization.analysis_depth] || categorization.analysis_depth;
+    document.getElementById('content-type').textContent = 
+        typeLabels[categorization.content_type] || categorization.content_type;
+    document.getElementById('classification-confidence').textContent = 
+        Math.round(categorization.classification_confidence * 100) + '%';
+}
+
+function displayRelatedContent(relatedContent) {
+    const container = document.getElementById('related-content-list');
+    
+    if (relatedContent.length === 0) {
+        container.innerHTML = '<div class="text-sm text-gray-500">関連するノートが見つかりませんでした</div>';
+        return;
+    }
+    
+    container.innerHTML = relatedContent.map(item => `
+        <a href="${item.url}" class="block p-2 border rounded hover:bg-blue-50 transition-colors">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="font-medium text-sm">${item.title}</div>
+                    <div class="text-xs text-gray-600 mb-1">${item.subtitle}</div>
+                    <div class="text-xs text-blue-600">${item.matching_aspects.join(', ')}</div>
+                </div>
+                <div class="text-xs text-gray-500 ml-2">
+                    類似度: ${Math.round(item.similarity_score * 100)}%
+                </div>
+            </div>
+        </a>
+    `).join('');
+}
+
+function displayImprovementSuggestions(suggestions) {
+    const container = document.getElementById('improvement-suggestions-list');
+    
+    if (suggestions.length === 0) {
+        container.innerHTML = '<div class="text-sm text-gray-500">現在、改善提案はありません</div>';
+        return;
+    }
+    
+    const priorityColors = {
+        'high': 'border-red-200 bg-red-50 text-red-800',
+        'medium': 'border-yellow-200 bg-yellow-50 text-yellow-800',
+        'low': 'border-green-200 bg-green-50 text-green-800'
+    };
+    
+    const priorityLabels = {
+        'high': '重要',
+        'medium': '中程度',
+        'low': '軽微'
+    };
+    
+    container.innerHTML = suggestions.map(suggestion => `
+        <div class="p-2 border rounded ${priorityColors[suggestion.priority] || 'border-gray-200 bg-gray-50'}">
+            <div class="flex items-start justify-between mb-1">
+                <div class="font-medium text-sm">${suggestion.title}</div>
+                <span class="text-xs px-2 py-1 rounded ${priorityColors[suggestion.priority] || 'bg-gray-200 text-gray-800'}">
+                    ${priorityLabels[suggestion.priority] || suggestion.priority}
+                </span>
+            </div>
+            <div class="text-xs">${suggestion.description}</div>
+        </div>
+    `).join('');
+}
+
+function displayRecommendedActions(actions) {
+    const container = document.getElementById('recommended-actions-list');
+    
+    if (!actions || actions.length === 0) {
+        container.innerHTML = '<div class="text-sm text-gray-500">推奨アクションはありません</div>';
+        return;
+    }
+    
+    container.innerHTML = actions.map(action => `
+        <div class="flex items-start gap-2 text-sm">
+            <i data-lucide="arrow-right" class="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0"></i>
+            <span>${action}</span>
+        </div>
+    `).join('');
+}
+
+function showInsightsError(error) {
+    document.getElementById('ai-insights-loading').innerHTML = `
+        <div class="text-center py-4 text-red-600">
+            <i data-lucide="alert-circle" class="w-5 h-5 mx-auto mb-2"></i>
+            <div>AI洞察の読み込みに失敗しました</div>
+            <div class="text-sm mt-1">${error}</div>
+            <button onclick="loadAIInsights()" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                再試行
+            </button>
+        </div>
+    `;
+    lucide.createIcons();
+}
+</script>
 {% endblock %}
