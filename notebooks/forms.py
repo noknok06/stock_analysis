@@ -1,16 +1,27 @@
-# notebooks/forms.py
+# notebooks/forms.py（修正版）
 from django import forms
 from django.forms.widgets import TextInput
+from taggit.forms import TagWidget
 from .models import Notebook, Entry
 
 class NotebookForm(forms.ModelForm):
     """ノートブック作成・編集フォーム"""
     
+    # タグフィールドをCharFieldとして定義し、保存時に手動処理
+    tags = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'tw-input',
+            'placeholder': 'タグをカンマ区切りで入力（例: 高配当,自動車,長期投資）'
+        }),
+        help_text='タグをカンマ区切りで入力してください'
+    )
+    
     class Meta:
         model = Notebook
         fields = [
             'stock_code', 'company_name', 'subtitle', 'investment_goal',
-            'current_price', 'target_price', 'risk_factors', 'tags'
+            'current_price', 'target_price', 'risk_factors'
         ]
         widgets = {
             'stock_code': forms.TextInput(attrs={
@@ -49,10 +60,9 @@ class NotebookForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['tags'].widget.attrs.update({
-            'class': 'tw-input',
-            'placeholder': 'タグをカンマ区切りで入力（例: 高配当,自動車,長期投資）'
-        })
+        # 既存のインスタンスがある場合、タグを文字列として表示
+        if self.instance and self.instance.pk:
+            self.fields['tags'].initial = ', '.join([tag.name for tag in self.instance.tags.all()])
     
     def save(self, commit=True, user=None):
         notebook = super().save(commit=False)
@@ -60,17 +70,35 @@ class NotebookForm(forms.ModelForm):
             notebook.user = user
         if notebook.stock_code and notebook.company_name:
             notebook.title = f"{notebook.stock_code} {notebook.company_name}"
+        
         if commit:
             notebook.save()
-            self.save_m2m()
+            # タグの処理
+            tags_str = self.cleaned_data.get('tags', '')
+            if tags_str:
+                tag_names = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
+                notebook.tags.set(tag_names)
+            else:
+                notebook.tags.clear()
+        
         return notebook
 
 class EntryForm(forms.ModelForm):
     """エントリー作成・編集フォーム"""
     
+    # タグフィールドをCharFieldとして定義
+    tags = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'tw-input',
+            'placeholder': 'タグをカンマ区切りで入力'
+        }),
+        help_text='タグをカンマ区切りで入力してください'
+    )
+    
     class Meta:
         model = Entry
-        fields = ['entry_type', 'title', 'content', 'tags']
+        fields = ['entry_type', 'title', 'content']
         widgets = {
             'entry_type': forms.Select(attrs={'class': 'tw-select'}),
             'title': forms.TextInput(attrs={
@@ -86,7 +114,20 @@ class EntryForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['tags'].widget.attrs.update({
-            'class': 'tw-input',
-            'placeholder': 'タグをカンマ区切りで入力'
-        })
+        # 既存のインスタンスがある場合、タグを文字列として表示
+        if self.instance and self.instance.pk:
+            self.fields['tags'].initial = ', '.join([tag.name for tag in self.instance.tags.all()])
+    
+    def save(self, commit=True):
+        entry = super().save(commit=commit)
+        
+        if commit:
+            # タグの処理
+            tags_str = self.cleaned_data.get('tags', '')
+            if tags_str:
+                tag_names = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
+                entry.tags.set(tag_names)
+            else:
+                entry.tags.clear()
+        
+        return entry

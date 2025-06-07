@@ -211,7 +211,7 @@ def related_content_api(request, notebook_id):
         
         search_engine = SemanticSearchEngine()
         related_content = search_engine.find_related_content(
-            notebook_id, request.user.id, limit
+            notebook_id, request.user.id, limit  # int型として渡す
         )
         
         return JsonResponse({
@@ -286,7 +286,7 @@ def ai_insights_api(request, notebook_id):
         return JsonResponse({'error': 'ノートが見つかりません'}, status=404)
     except Exception as e:
         return JsonResponse({'error': f'AI洞察取得エラー: {str(e)}'}, status=500)
-
+        
 def generate_improvement_suggestions(notebook, analysis, categorization):
     """改善提案生成"""
     suggestions = []

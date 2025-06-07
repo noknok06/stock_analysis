@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadAIInsights() {
-    const notebookId = '{{ notebook.pk }}';
+    const notebookId = {{ notebook.pk }};  // UUIDではなく数値IDとして取得
     
     fetch(`/api/insights/${notebookId}/`)
         .then(response => response.json())

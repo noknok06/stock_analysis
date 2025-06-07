@@ -208,7 +208,7 @@ def entry_create_view(request, notebook_pk):
                 entry = form.save(commit=False)
                 entry.notebook = notebook
                 entry.save()
-                form.save_m2m()
+                # form.save()内でタグの処理も行われるため、save_m2m()は不要
                 
                 # AI分析の実行（利用可能な場合のみ）
                 if AI_AVAILABLE:
@@ -241,8 +241,7 @@ def entry_create_view(request, notebook_pk):
         'ai_available': AI_AVAILABLE,
     }
     return render(request, 'notebooks/entry_create.html', context)
-
-
+    
 def search_api_view(request):
     """検索API（AJAX用）"""
     query = request.GET.get('q', '')

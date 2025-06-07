@@ -65,7 +65,7 @@ class SemanticSearchEngine:
             print(f"セマンティック検索エラー: {str(e)}")
             return []
     
-    def find_related_content(self, notebook_id: str, user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
+    def find_related_content(self, notebook_id: int, user_id: int, limit: int = 5) -> List[Dict[str, Any]]:
         """関連コンテンツ推奨"""
         try:
             from .models import Notebook
@@ -98,9 +98,9 @@ class SemanticSearchEngine:
         # 類似度順でソート
         similarity_scores.sort(key=lambda x: x['similarity_score'], reverse=True)
         
-        # 結果フォーマット
+        # 結果フォーマット（notebook_idをintとして返す）
         return [{
-            'notebook_id': item['notebook'].pk,  # intに変更
+            'notebook_id': item['notebook'].pk,  # intとして返す
             'title': item['notebook'].title,
             'subtitle': item['notebook'].subtitle,
             'similarity_score': item['similarity_score'],
@@ -109,7 +109,7 @@ class SemanticSearchEngine:
             'updated_at': item['notebook'].updated_at.isoformat(),
             'url': item['notebook'].get_absolute_url(),
         } for item in similarity_scores[:limit]]
-    
+        
     def auto_categorize_content(self, content: str, title: str = "") -> Dict[str, Any]:
         """コンテンツ自動分類"""
         try:
